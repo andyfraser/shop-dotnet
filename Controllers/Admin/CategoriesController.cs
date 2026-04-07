@@ -15,7 +15,7 @@ public class CategoriesController : AdminBaseController
             SELECT c.*, p.name as ParentName,
                    (SELECT COUNT(*) FROM products WHERE category_id=c.id) as ProductCount
             FROM categories c LEFT JOIN categories p ON c.parent_id=p.id
-            ORDER BY COALESCE(p.name, c.name), c.parent_id IS NOT NULL, c.name").ToList();
+            ORDER BY p.name, c.name").ToList();
 
         ViewData["Title"] = "Categories";
         ViewData["Active"] = "categories";
