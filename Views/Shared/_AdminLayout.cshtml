@@ -1,0 +1,65 @@
+@{
+    var currentUser = ViewData["CurrentUser"] as UserSession;
+    var siteName = ViewData["SiteName"] as string ?? "Demo|shop";
+    var siteNamePlain = siteName.Replace("|", "");
+    var active = ViewData["Active"] as string ?? "";
+    var pageTitle = ViewData["Title"] as string ?? "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@pageTitle — Admin — @siteNamePlain</title>
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    @siteNamePlain
+    <small>Admin Panel</small>
+  </div>
+
+  <div class="sidebar-section">Store</div>
+  <nav>
+    <a href="/admin" class="@(active == "dashboard" ? "active" : "")">
+      <span class="ico">📊</span> Dashboard
+    </a>
+    <a href="/admin/products" class="@(active == "products" ? "active" : "")">
+      <span class="ico">📦</span> Products
+    </a>
+    <a href="/admin/categories" class="@(active == "categories" ? "active" : "")">
+      <span class="ico">🏷</span> Categories
+    </a>
+    <a href="/admin/orders" class="@(active == "orders" ? "active" : "")">
+      <span class="ico">🧾</span> Orders
+    </a>
+    <a href="/admin/delivery" class="@(active == "delivery" ? "active" : "")">
+      <span class="ico">🚚</span> Delivery
+    </a>
+    <div class="sidebar-section">Users</div>
+    <a href="/admin/users" class="@(active == "users" ? "active" : "")">
+      <span class="ico">👥</span> Users
+    </a>
+    <div class="sidebar-section">Config</div>
+    <a href="/admin/settings" class="@(active == "settings" ? "active" : "")">
+      <span class="ico">⚙️</span> Settings
+    </a>
+  </nav>
+
+  <div class="sidebar-foot">
+    <a href="/">← View Store</a>
+    <a href="/logout">Sign out</a>
+  </div>
+</aside>
+
+<div class="admin-main">
+@RenderBody()
+</div>
+
+</body>
+</html>

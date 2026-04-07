@@ -1,0 +1,57 @@
+@{
+    Layout = "_AdminLayout";
+    var users = ViewData["Users"] as List<User> ?? new();
+    var flashMsg = ViewData["FlashMsg"] as string;
+    var flashErr = ViewData["FlashErr"] as string;
+    var currentUser = ViewData["CurrentUser"] as UserSession;
+}
+
+<div class="admin-topbar">
+  <h1>Users</h1>
+  <div class="actions">
+    <a href="/admin/users/new" class="btn btn-primary">+ Add User</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (!string.IsNullOrEmpty(flashMsg))
+  {
+    <div class="alert alert-success">@flashMsg</div>
+  }
+  @if (!string.IsNullOrEmpty(flashErr))
+  {
+    <div class="alert alert-error">@flashErr</div>
+  }
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Email</th><th>Role</th><th>Orders</th><th>Joined</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var u in users)
+      {
+        <tr>
+          <td><strong>@u.Name</strong></td>
+          <td>@u.Email</td>
+          <td>
+            <span class="badge @(u.Role == "admin" ? "badge-danger" : "badge-neutral")">
+              @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(u.Role)
+            </span>
+          </td>
+          <td>@u.OrderCount</td>
+          <td>@(DateTime.TryParse(u.CreatedAt, out var d) ? d.ToString("dd MMM yyyy") : "")</td>
+          <td>
+            <a href="/admin/users/edit?id=@u.Id" class="btn btn-outline btn-sm">Edit</a>
+            @if (u.Id != currentUser?.Id)
+            {
+              <a href="/admin/users/delete?id=@u.Id" class="btn btn-danger btn-sm"
+                 onclick="return confirm('Delete user @u.Name?')">Delete</a>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

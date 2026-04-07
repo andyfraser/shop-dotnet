@@ -1,0 +1,109 @@
+@{
+    var currentUser = ViewData["CurrentUser"] as UserSession;
+    var cartCount = (int)(ViewData["CartCount"] ?? 0);
+    var navTree = ViewData["NavTree"] as List<Category> ?? new();
+    var siteName = ViewData["SiteName"] as string ?? "Demo|shop";
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+    var searchQuery = ViewData["SearchQuery"] as string ?? "";
+    var parts = siteName.Split('|', 2);
+    var logoPrefix = parts[0];
+    var logoSuffix = parts.Length > 1 ? parts[1] : "";
+    var siteNamePlain = siteName.Replace("|", "");
+    var pageTitle = ViewData["Title"] as string ?? "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@pageTitle — @siteNamePlain</title>
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shop.css">
+<meta name="csrf-token" content="@csrfToken">
+<style>
+.sub-menu { display: none !important; }
+.has-sub:hover > .sub-menu { display: flex !important; flex-direction: column; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">@logoPrefix@if (!string.IsNullOrEmpty(logoSuffix)){<span>@logoSuffix</span>}</a>
+
+    <form class="header-search" action="/search" method="GET">
+      <input type="text" name="q" placeholder="Search products…" value="@searchQuery">
+      <button type="submit">Search</button>
+    </form>
+
+    <nav class="header-actions">
+      @if (currentUser != null)
+      {
+        <a href="/account">👤 @currentUser.Name</a>
+        @if (currentUser.IsAdmin)
+        {
+          <a href="/admin">⚙ Admin</a>
+        }
+        <a href="/logout">Sign out</a>
+      }
+      else
+      {
+        <a href="/login">Sign in</a>
+        <a href="/register">Register</a>
+      }
+      <a href="/cart" id="cart-link">
+        🛒 Cart
+        @if (cartCount > 0)
+        {
+          <span class="cart-badge">@cartCount</span>
+        }
+      </a>
+    </nav>
+  </div>
+</header>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <ul>
+      <li><a href="/">Home</a></li>
+      @foreach (var cat in navTree)
+      {
+        <li class="@(cat.Children.Any() ? "has-sub" : "")">
+          <a href="/category/@cat.Slug">
+            @cat.Name
+            @if (cat.Children.Any())
+            {
+              <span class="arrow">›</span>
+            }
+          </a>
+          @if (cat.Children.Any())
+          {
+            <ul class="sub-menu">
+              @foreach (var sub in cat.Children)
+              {
+                <li><a href="/category/@sub.Slug">@sub.Name</a></li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+</nav>
+
+<main>
+@RenderBody()
+</main>
+
+<footer class="site-footer">
+  <p>&copy; @DateTime.Now.Year @siteNamePlain. A demo e-commerce application.</p>
+</footer>
+
+<div id="toast-container" aria-live="polite" aria-atomic="false"
+     style="position:fixed;top:80px;right:1.5rem;z-index:500;display:flex;flex-direction:column;gap:.5rem;width:300px;pointer-events:none;"></div>
+
+<script src="/js/shop.js"></script>
+</body>
+</html>

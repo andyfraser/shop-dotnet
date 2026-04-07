@@ -1,0 +1,71 @@
+@{
+    Layout = "_AdminLayout";
+    var isNew = (bool)(ViewData["IsNew"] ?? true);
+    var categoryId = (int)(ViewData["CategoryId"] ?? 0);
+    var category = ViewData["Category"] as Category ?? new();
+    var allCategories = ViewData["AllCategories"] as List<Category> ?? new();
+    var errors = ViewData["Errors"] as IEnumerable<string> ?? Array.Empty<string>();
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+}
+
+<div class="admin-topbar">
+  <h1>@(isNew ? "Add Category" : "Edit Category")</h1>
+  <div class="actions">
+    <a href="/admin/categories" class="btn btn-outline">← Back</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (errors.Any())
+  {
+    <div class="alert alert-error">
+      @foreach (var e in errors) { <div>@e</div> }
+    </div>
+  }
+
+  <div class="card" style="max-width:500px;">
+    <form method="POST" action="/admin/categories">
+      <input type="hidden" name="csrf_token" value="@csrfToken">
+      @if (categoryId > 0)
+      {
+        <input type="hidden" name="id" value="@categoryId">
+      }
+
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" name="name" class="form-control" value="@category.Name" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label>Parent Category</label>
+        <select name="parent_id" class="form-control">
+          <option value="">— Top level —</option>
+          @foreach (var c in allCategories)
+          {
+            if (c.Id == categoryId) continue;
+            var selected = category.ParentId == c.Id ? "selected" : "";
+            <option value="@c.Id" @selected>@c.Name</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Icon <small style="color:var(--ink-2);font-weight:400;">— paste any emoji</small></label>
+        <input type="text" name="icon" class="form-control"
+               value="@(category.Icon ?? "")" placeholder="e.g. 💻" style="max-width:120px;">
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" class="form-control">@(category.Description ?? "")</textarea>
+      </div>
+
+      <div style="display:flex;gap:.75rem;">
+        <button type="submit" name="save" class="btn btn-primary">
+          @(isNew ? "Create Category" : "Save Changes")
+        </button>
+        <a href="/admin/categories" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

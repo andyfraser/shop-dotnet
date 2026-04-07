@@ -1,0 +1,51 @@
+@{
+    Layout = "_AdminLayout";
+    var options = ViewData["Options"] as List<DeliveryOption> ?? new();
+    var flashMsg = ViewData["FlashMsg"] as string;
+}
+
+<div class="admin-topbar">
+  <h1>Delivery Options</h1>
+  <div class="actions">
+    <a href="/admin/delivery/new" class="btn btn-primary">+ Add Option</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (!string.IsNullOrEmpty(flashMsg))
+  {
+    <div class="alert alert-success">@flashMsg</div>
+  }
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Price</th><th>Min Order</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var opt in options)
+      {
+        <tr>
+          <td><strong>@opt.Name</strong></td>
+          <td>@V.Money(ViewData["CurrencySymbol"] as string, opt.Price)</td>
+          <td>@V.Money(ViewData["CurrencySymbol"] as string, opt.MinOrderTotal)</td>
+          <td>
+            <span class="badge @(opt.Active ? "badge-success" : "badge-neutral")">
+              @(opt.Active ? "Active" : "Inactive")
+            </span>
+          </td>
+          <td>
+            <a href="/admin/delivery/edit?id=@opt.Id" class="btn btn-outline btn-sm">Edit</a>
+            <a href="/admin/delivery/delete?id=@opt.Id" class="btn btn-danger btn-sm"
+               onclick="return confirm('Are you sure you want to delete this option?')">Delete</a>
+          </td>
+        </tr>
+      }
+      @if (!options.Any())
+      {
+        <tr><td colspan="5" style="text-align:center;padding:2rem;opacity:.5;">No delivery options found.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

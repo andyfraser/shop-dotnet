@@ -1,0 +1,49 @@
+@{
+    Layout = "_AdminLayout";
+    var orders = ViewData["Orders"] as List<Order> ?? new();
+    var filter = ViewData["Filter"] as string ?? "";
+    var statusLabels = new Dictionary<string, string> {
+        [""] = "All", ["pending"] = "Pending", ["confirmed"] = "Confirmed",
+        ["shipped"] = "Shipped", ["delivered"] = "Delivered", ["cancelled"] = "Cancelled"
+    };
+}
+
+<div class="admin-topbar">
+  <h1>Orders</h1>
+  <div class="actions">
+    @foreach (var kv in statusLabels)
+    {
+      <a href="?status=@kv.Key" class="btn @(filter == kv.Key ? "btn-primary" : "btn-outline") btn-sm">@kv.Value</a>
+    }
+  </div>
+</div>
+
+<div class="content">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (orders.Any())
+      {
+        @foreach (var o in orders)
+        {
+          <tr>
+            <td><strong>#@V.PadOrder(o.Id)</strong></td>
+            <td>@(o.UserName ?? "Guest")</td>
+            <td>@V.Money(ViewData["CurrencySymbol"] as string, o.Total)</td>
+            <td><span class="badge @V.StatusBadge(o.Status)">@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(o.Status)</span></td>
+            <td>@(DateTime.TryParse(o.CreatedAt, out var d) ? d.ToString("dd MMM yyyy, HH:mm") : o.CreatedAt)</td>
+            <td><a href="/admin/orders/detail?id=@o.Id" class="btn btn-outline btn-sm">View</a></td>
+          </tr>
+        }
+      }
+      else
+      {
+        <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-2);">No orders found</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

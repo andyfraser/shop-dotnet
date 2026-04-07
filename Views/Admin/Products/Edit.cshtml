@@ -1,0 +1,119 @@
+@{
+    Layout = "_AdminLayout";
+    var isNew = (bool)(ViewData["IsNew"] ?? true);
+    var productId = (int)(ViewData["ProductId"] ?? 0);
+    var product = ViewData["Product"] as Product ?? new();
+    var categories = ViewData["Categories"] as List<Category> ?? new();
+    var errors = ViewData["Errors"] as IEnumerable<string> ?? Array.Empty<string>();
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+}
+
+<div class="admin-topbar">
+  <h1>@(isNew ? "Add Product" : "Edit Product")</h1>
+  <div class="actions">
+    <a href="/admin/products" class="btn btn-outline">← Back</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (errors.Any())
+  {
+    <div class="alert alert-error">
+      @foreach (var e in errors) { <div>@e</div> }
+    </div>
+  }
+
+  <div class="card" style="max-width:800px;">
+    <form method="POST" action="/admin/products" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="@csrfToken">
+      @if (productId > 0)
+      {
+        <input type="hidden" name="id" value="@productId">
+      }
+
+      <div class="form-grid">
+        <div class="span-2">
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" name="name" class="form-control" value="@product.Name" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Price *</label>
+          <input type="number" name="price" step="0.01" min="0.01" class="form-control"
+                 value="@product.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" required>
+        </div>
+
+        <div class="form-group">
+          <label>Stock Quantity</label>
+          <input type="number" name="stock" min="0" class="form-control" value="@product.Stock">
+        </div>
+
+        <div class="form-group span-2">
+          <label>Category</label>
+          <select name="category_id" class="form-control">
+            <option value="">— No category —</option>
+            @foreach (var cat in categories)
+            {
+              var selected = product.CategoryId == cat.Id ? "selected" : "";
+              <option value="@cat.Id" @selected>
+                @(!string.IsNullOrEmpty(cat.ParentName) ? cat.ParentName + " › " : "")@cat.Name
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="span-2">
+          <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" class="form-control">@product.Description</textarea>
+          </div>
+        </div>
+
+        <div class="span-2">
+          <div class="form-group">
+            <label>Product Image</label>
+            @if (!string.IsNullOrEmpty(product.Image))
+            {
+              <div style="margin-bottom:.75rem;">
+                <img src="/images/@product.Image" alt=""
+                     style="height:140px;object-fit:cover;border-radius:var(--radius);display:block;"
+                     onerror="this.onerror=null;this.src='/images/placeholder.svg'">
+                <label style="display:flex;align-items:center;gap:.4rem;margin-top:.5rem;font-weight:400;cursor:pointer;">
+                  <input type="checkbox" name="remove_image" value="1">
+                  Remove current image
+                </label>
+              </div>
+              <input type="hidden" name="existing_image" value="@product.Image">
+            }
+            <input type="file" name="image" class="form-control"
+                   accept="image/jpeg,image/png,image/gif,image/webp"
+                   style="padding:.4rem;">
+            <div style="font-size:.75rem;color:var(--ink-2);margin-top:.35rem;">
+              JPEG, PNG, GIF or WebP — max 5MB
+            </div>
+          </div>
+        </div>
+
+        <div class="span-2" style="display:flex;gap:1.5rem;">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--ink-2);">
+            <input type="checkbox" name="active" value="1" @(product.Active ? "checked" : "")>
+            Active (visible in store)
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--ink-2);">
+            <input type="checkbox" name="featured" value="1" @(product.Featured ? "checked" : "")>
+            Featured Product (shown on homepage)
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.75rem;margin-top:1rem;">
+        <button type="submit" name="save" class="btn btn-primary">
+          @(isNew ? "Create Product" : "Save Changes")
+        </button>
+        <a href="/admin/products" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

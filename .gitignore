@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+
+# SQLite database
+*.db
+*.db-shm
+*.db-wal
+
+# ASP.NET user secrets and local config
+appsettings.Development.json
+*.user
+
+# Rider / VS / VS Code
+.idea/
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+
+# macOS
+.DS_Store

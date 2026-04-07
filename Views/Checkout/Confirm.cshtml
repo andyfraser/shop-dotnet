@@ -1,0 +1,84 @@
+@{
+    Layout = "_Layout";
+    var order = ViewData["Order"] as Order ?? new();
+    var orderItems = ViewData["OrderItems"] as List<OrderItem> ?? new();
+    var currentUser = ViewData["CurrentUser"] as UserSession;
+}
+<div class="container" style="max-width:700px;">
+  <div style="text-align:center;padding:3rem 0 2rem;">
+    <div style="font-size:4rem;margin-bottom:1rem;">✅</div>
+    <h1 style="font-family:var(--font-display);font-size:2rem;margin-bottom:.5rem;">Order Confirmed!</h1>
+    <p style="color:var(--ink-2);">Thank you for your order. We'll have it on its way soon.</p>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.5rem;">
+      <div>
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);">Order #</div>
+        <strong>@V.PadOrder(order.Id)</strong>
+      </div>
+      <div>
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);">Date</div>
+        <strong>@(DateTime.TryParse(order.CreatedAt, out var d) ? d.ToString("dd MMM yyyy") : order.CreatedAt)</strong>
+      </div>
+      <div>
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);">Status</div>
+        <span class="badge badge-warning">@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(order.Status)</span>
+      </div>
+      <div>
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);">Total</div>
+        <strong style="color:var(--accent-2)">@V.Money(ViewData["CurrencySymbol"] as string, order.Total)</strong>
+      </div>
+    </div>
+
+    <h3 style="font-family:var(--font-display);margin-bottom:.75rem;">Items</h3>
+    @for (int i = 0; i < orderItems.Count; i++)
+    {
+      var item = orderItems[i];
+      var border = i < orderItems.Count - 1 ? "border-bottom:1px solid var(--line);" : "";
+      <div style="display:flex;justify-content:space-between;padding:.5rem 0;@border font-size:.875rem;">
+        <span>
+          <a href="/product/@item.Slug">@item.Name</a>
+          × @item.Quantity
+        </span>
+        <strong>@V.Money(ViewData["CurrencySymbol"] as string, item.UnitPrice * item.Quantity)</strong>
+      </div>
+    }
+
+    <div style="margin-top:1.2rem;border-top:2px solid var(--line);padding-top:1rem;">
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.875rem;">
+        <span>Subtotal</span>
+        <strong>@V.Money(ViewData["CurrencySymbol"] as string, order.Total - order.DeliveryCost)</strong>
+      </div>
+      @if (!string.IsNullOrEmpty(order.DeliveryMethod))
+      {
+        <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.875rem;">
+          <span>Delivery (@order.DeliveryMethod)</span>
+          <strong>@V.Money(ViewData["CurrencySymbol"] as string, order.DeliveryCost)</strong>
+        </div>
+      }
+      <div style="display:flex;justify-content:space-between;padding:.75rem 0;font-size:1.15rem;font-weight:700;margin-top:.5rem;">
+        <span>Total</span>
+        <span style="color:var(--accent-2)">@V.Money(ViewData["CurrencySymbol"] as string, order.Total)</span>
+      </div>
+    </div>
+
+    <div style="margin-top:1.2rem;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin-bottom:.3rem;">Customer</div>
+      <div style="font-size:.875rem;"><strong>@order.CustomerName</strong> (@order.CustomerEmail)</div>
+    </div>
+
+    <div style="margin-top:1.2rem;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin-bottom:.3rem;">Shipping to</div>
+      <div style="font-size:.875rem;">@Html.Raw((order.ShippingAddress ?? "").Replace("\n", "<br>"))</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:1rem;margin-top:1.5rem;justify-content:center;">
+    @if (currentUser != null)
+    {
+      <a href="/account" class="btn btn-outline">View My Orders</a>
+    }
+    <a href="/" class="btn btn-primary">Continue Shopping</a>
+  </div>
+</div>

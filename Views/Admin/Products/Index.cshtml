@@ -1,0 +1,85 @@
+@{
+    Layout = "_AdminLayout";
+    var products = ViewData["Products"] as List<Product> ?? new();
+    var search = ViewData["Search"] as string ?? "";
+    var flashMsg = ViewData["FlashMsg"] as string;
+    var lowThreshold = (int)(ViewData["LowStockThreshold"] ?? 10);
+}
+
+<div class="admin-topbar">
+  <h1>Products</h1>
+  <div class="actions">
+    <form method="get" action="/admin/products" style="display:inline-flex;gap:.5rem;">
+      <input type="text" name="search" value="@search"
+             placeholder="Filter by name…" class="form-control" style="width:220px;">
+      <button type="submit" class="btn btn-outline">Filter</button>
+      @if (!string.IsNullOrEmpty(search))
+      {
+        <a href="/admin/products" class="btn btn-outline">Clear</a>
+      }
+    </form>
+    <a href="/admin/products/new" class="btn btn-primary">+ Add Product</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (!string.IsNullOrEmpty(flashMsg))
+  {
+    <div class="alert alert-success">@flashMsg</div>
+  }
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:60px"></th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var p in products)
+      {
+        <tr>
+          <td>
+            <img src="@V.ImgSrc(p.Image)" alt="@p.Name" class="thumb"
+                 onerror="this.onerror=null;this.src='/images/placeholder.svg'">
+          </td>
+          <td>
+            <strong>@p.Name</strong>
+            @if (p.Featured) { <span title="Featured Product" style="color:var(--gold);margin-left:.25rem;">★</span> }
+          </td>
+          <td>@(p.CatName ?? "—")</td>
+          <td>@V.Money(ViewData["CurrencySymbol"] as string, p.Price)</td>
+          <td>
+            @if (p.Stock == 0)
+            {
+              <span class="badge badge-danger">@p.Stock</span>
+            }
+            else if (p.Stock <= lowThreshold)
+            {
+              <span class="badge badge-warning">@p.Stock</span>
+            }
+            else
+            {
+              <span class="badge badge-success">@p.Stock</span>
+            }
+          </td>
+          <td>
+            <span class="badge @(p.Active ? "badge-success" : "badge-neutral")">
+              @(p.Active ? "Active" : "Inactive")
+            </span>
+          </td>
+          <td>
+            <a href="/admin/products/edit?id=@p.Id" class="btn btn-outline btn-sm">Edit</a>
+            <a href="/admin/products/delete?id=@p.Id" class="btn btn-danger btn-sm"
+               onclick="return confirm('Deactivate this product?')">Delete</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

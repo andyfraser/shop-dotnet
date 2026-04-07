@@ -1,0 +1,48 @@
+@{
+    Layout = "_AdminLayout";
+    var categories = ViewData["Categories"] as List<Category> ?? new();
+    var flashMsg = ViewData["FlashMsg"] as string;
+}
+
+<div class="admin-topbar">
+  <h1>Categories</h1>
+  <div class="actions">
+    <a href="/admin/categories/new" class="btn btn-primary">+ Add Category</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (!string.IsNullOrEmpty(flashMsg))
+  {
+    <div class="alert alert-success">@flashMsg</div>
+  }
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Parent</th><th>Slug</th><th>Products</th><th>Description</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var c in categories)
+      {
+        <tr>
+          <td><strong>@c.Name</strong></td>
+          <td>@(c.ParentName != null ? c.ParentName : Html.Raw("<span style='opacity:.4'>—</span>"))</td>
+          <td>
+            <code style="font-size:.78rem;background:var(--sand);padding:.1rem .4rem;border-radius:2px;">@c.Slug</code>
+          </td>
+          <td>@c.ProductCount</td>
+          <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            @(c.Description ?? "")
+          </td>
+          <td>
+            <a href="/admin/categories/edit?id=@c.Id" class="btn btn-outline btn-sm">Edit</a>
+            <a href="/admin/categories/delete?id=@c.Id" class="btn btn-danger btn-sm"
+               onclick="return confirm('Delete this category? Products will become uncategorised.')">Delete</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

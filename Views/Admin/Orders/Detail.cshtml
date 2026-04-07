@@ -1,0 +1,117 @@
+@{
+    Layout = "_AdminLayout";
+    var order = ViewData["Order"] as Order ?? new();
+    var items = ViewData["OrderItems"] as List<OrderItem> ?? new();
+    var flashMsg = ViewData["FlashMsg"] as string;
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+    var statuses = new[] { "pending", "confirmed", "shipped", "delivered", "cancelled" };
+}
+
+<div class="admin-topbar">
+  <h1>Order #@V.PadOrder(order.Id)</h1>
+  <div class="actions">
+    <a href="/admin/orders" class="btn btn-outline">← All Orders</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (!string.IsNullOrEmpty(flashMsg))
+  {
+    <div class="alert alert-success">@flashMsg</div>
+  }
+
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;">
+    <div>
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1.2rem;">
+          <h2 style="font-family:var(--font-display);font-size:1.1rem;">Order Items</h2>
+          <span class="badge @V.StatusBadge(order.Status)" style="font-size:.8rem;">
+            @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(order.Status)
+          </span>
+        </div>
+        <table class="data-table" style="box-shadow:none;">
+          <thead>
+            <tr><th>Product</th><th>Unit Price</th><th>Qty</th><th>Subtotal</th></tr>
+          </thead>
+          <tbody>
+            @foreach (var item in items)
+            {
+              <tr>
+                <td><a href="/product/@item.Slug">@item.ProductName</a></td>
+                <td>@V.Money(ViewData["CurrencySymbol"] as string, item.UnitPrice)</td>
+                <td>@item.Quantity</td>
+                <td><strong>@V.Money(ViewData["CurrencySymbol"] as string, item.UnitPrice * item.Quantity)</strong></td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align:right;font-weight:600;padding:.8rem 1rem;">Subtotal</td>
+              <td style="padding:.8rem 1rem;"><strong>@V.Money(ViewData["CurrencySymbol"] as string, order.Total - order.DeliveryCost)</strong></td>
+            </tr>
+            @if (!string.IsNullOrEmpty(order.DeliveryMethod))
+            {
+              <tr>
+                <td colspan="3" style="text-align:right;font-weight:600;padding:.8rem 1rem;">Delivery (@order.DeliveryMethod)</td>
+                <td style="padding:.8rem 1rem;"><strong>@V.Money(ViewData["CurrencySymbol"] as string, order.DeliveryCost)</strong></td>
+              </tr>
+            }
+            <tr>
+              <td colspan="3" style="text-align:right;font-weight:700;padding:.8rem 1rem;font-size:1.1rem;">Total</td>
+              <td style="padding:.8rem 1rem;">
+                <strong style="font-size:1.2rem;color:var(--accent-2);">@V.Money(ViewData["CurrencySymbol"] as string, order.Total)</strong>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      @if (!string.IsNullOrEmpty(order.ShippingAddress))
+      {
+        <div class="card">
+          <h3 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);margin-bottom:.75rem;">Shipping Address</h3>
+          <div style="font-size:.9rem;line-height:1.8;">@Html.Raw((order.ShippingAddress ?? "").Replace("\n", "<br>"))</div>
+          @if (!string.IsNullOrEmpty(order.Notes))
+          {
+            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);">
+              <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);margin-bottom:.4rem;">Notes</div>
+              <div style="font-size:.875rem;">@Html.Raw((order.Notes ?? "").Replace("\n", "<br>"))</div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:1rem;">
+        <h3 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);margin-bottom:.75rem;">Customer</h3>
+        <div style="font-weight:600;margin-bottom:.2rem;">@(order.UserName ?? "Guest")</div>
+        <div style="font-size:.85rem;color:var(--ink-2);">@(order.UserEmail ?? order.CustomerEmail ?? "")</div>
+        <div style="font-size:.8rem;color:var(--ink-2);margin-top:.75rem;">
+          Order placed @(DateTime.TryParse(order.CreatedAt, out var d) ? d.ToString("dd MMM yyyy, HH:mm") : "")
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);margin-bottom:.75rem;">Update Status</h3>
+        <form method="POST" action="/admin/orders/detail">
+          <input type="hidden" name="csrf_token" value="@csrfToken">
+          <input type="hidden" name="id" value="@order.Id">
+          <div class="form-group">
+            <select name="status" class="form-control">
+              @foreach (var st in statuses)
+              {
+                <option value="@st" @(order.Status == st ? "selected" : "")>
+                  @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(st)
+                </option>
+              }
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">
+            Update Status
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

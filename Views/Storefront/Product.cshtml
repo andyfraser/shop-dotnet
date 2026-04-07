@@ -1,0 +1,113 @@
+@{
+    Layout = "_Layout";
+    var product = ViewData["Product"] as Product ?? new();
+    var breadcrumb = ViewData["Breadcrumb"] as List<Category> ?? new();
+    var related = ViewData["RelatedProducts"] as List<Product> ?? new();
+    var lowStock = (int)(ViewData["LowStockThreshold"] ?? 10);
+    var flashSuccess = ViewData["FlashSuccess"] as string;
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+}
+
+<div class="container">
+
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    @foreach (var c in breadcrumb)
+    {
+      <span class="sep">›</span>
+      <a href="/category/@c.Slug">@c.Name</a>
+    }
+    <span class="sep">›</span>
+    <span>@product.Name</span>
+  </div>
+
+  @if (!string.IsNullOrEmpty(flashSuccess))
+  {
+    <div class="alert alert-success">@flashSuccess</div>
+  }
+
+  <div class="product-detail">
+    <div class="product-img">
+      <img src="@V.ImgSrc(product.Image)" alt="@product.Name"
+           onerror="this.onerror=null;this.src='/images/placeholder.svg'">
+    </div>
+
+    <div class="product-meta">
+      @if (!string.IsNullOrEmpty(product.CatName))
+      {
+        <div>
+          <a href="/category/@product.CatSlug"
+             style="color:var(--accent);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">
+            @product.CatName
+          </a>
+        </div>
+      }
+
+      <h1 class="product-title">@product.Name</h1>
+      <div class="product-price">@V.Money(ViewData["CurrencySymbol"] as string, product.Price)</div>
+
+      @if (!string.IsNullOrEmpty(product.Description))
+      {
+        <p class="product-desc">@Html.Raw(product.Description.Replace("\n", "<br>"))</p>
+      }
+
+      <div>
+        @if (product.Stock > lowStock)
+        {
+          <span class="badge badge-success">✓ In Stock</span>
+        }
+        else if (product.Stock > 0)
+        {
+          <span class="badge badge-warning">⚠ Only @product.Stock left</span>
+        }
+        else
+        {
+          <span class="badge badge-danger">✗ Out of Stock</span>
+        }
+      </div>
+
+      @if (product.Stock > 0)
+      {
+        <div id="cart-message"></div>
+        <form method="POST" action="/product/@product.Slug" id="add-to-cart-form">
+          <input type="hidden" name="csrf_token" value="@csrfToken">
+          <input type="hidden" name="product_id" value="@product.Id">
+          <input type="hidden" name="slug" value="@product.Slug">
+          <div class="qty-row">
+            <div class="form-group" style="margin:0">
+              <label for="qty">Quantity</label>
+              <input type="number" id="qty" name="qty" class="form-control qty-input"
+                     value="1" min="1" max="@product.Stock">
+            </div>
+            <button type="submit" name="add_to_cart" class="btn btn-primary" style="padding:.65rem 1.8rem;">
+              Add to Cart
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+
+  @if (related.Any())
+  {
+    <section>
+      <h2 class="page-title" style="font-size:1.4rem;">Related Products</h2>
+      <div class="product-grid">
+        @foreach (var r in related)
+        {
+          <a href="/product/@r.Slug" class="product-card">
+            <div class="img-wrap">
+              <img src="@V.ImgSrc(r.Image)" alt="@r.Name"
+                   onerror="this.onerror=null;this.src='/images/placeholder.svg'">
+            </div>
+            <div class="card-body">
+              <div class="card-name">@r.Name</div>
+              <div class="card-price">@V.Money(ViewData["CurrencySymbol"] as string, r.Price)</div>
+            </div>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+</div>

@@ -1,0 +1,64 @@
+@{
+    Layout = "_AdminLayout";
+    var isNew = (bool)(ViewData["IsNew"] ?? true);
+    var option = ViewData["Option"] as DeliveryOption ?? new();
+    var errors = ViewData["Errors"] as IEnumerable<string> ?? Array.Empty<string>();
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+}
+
+<div class="admin-topbar">
+  <h1>@(isNew ? "Add Delivery Option" : "Edit Delivery Option")</h1>
+  <div class="actions">
+    <a href="/admin/delivery" class="btn btn-outline">← Back</a>
+  </div>
+</div>
+
+<div class="content">
+  @if (errors.Any())
+  {
+    <div class="alert alert-error">
+      @foreach (var e in errors) { <div>@e</div> }
+    </div>
+  }
+
+  <div class="card" style="max-width:500px;">
+    <form method="POST" action="/admin/delivery">
+      <input type="hidden" name="csrf_token" value="@csrfToken">
+      @if (option.Id > 0)
+      {
+        <input type="hidden" name="id" value="@option.Id">
+      }
+
+      <div class="form-group">
+        <label>Option Name *</label>
+        <input type="text" name="name" class="form-control"
+               value="@option.Name" required autofocus placeholder="e.g. Standard Shipping">
+      </div>
+
+      <div class="form-group">
+        <label>Price *</label>
+        <input type="number" name="price" class="form-control" step="0.01" min="0"
+               value="@option.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" required placeholder="0.00">
+      </div>
+
+      <div class="form-group">
+        <label>Minimum Order Total</label>
+        <input type="number" name="min_order_total" class="form-control" step="0.01" min="0"
+               value="@option.MinOrderTotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" placeholder="0.00">
+        <small style="color:var(--ink-2)">Option only shows if order subtotal is at least this much. 0 for always.</small>
+      </div>
+
+      <div class="form-group" style="display:flex;align-items:center;gap:.5rem;margin-top:1.5rem;">
+        <input type="checkbox" id="active" name="active" value="1" @(option.Active ? "checked" : "")>
+        <label for="active" style="margin:0;font-weight:400;">Visible in checkout</label>
+      </div>
+
+      <div style="display:flex;gap:.75rem;margin-top:2rem;">
+        <button type="submit" class="btn btn-primary">
+          @(isNew ? "Create Option" : "Save Changes")
+        </button>
+        <a href="/admin/delivery" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
