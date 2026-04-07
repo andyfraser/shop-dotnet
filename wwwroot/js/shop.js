@@ -51,6 +51,27 @@ function updateCartBadge(count) {
     }
 }
 
+// ── Cookie Consent ───────────────────────────────────────────────────────────
+
+(function () {
+    const banner = document.getElementById('cookie-banner');
+    if (!banner) return;
+    if (localStorage.getItem('cookie_consent')) return;
+
+    // Show after a short delay so the page settles first
+    setTimeout(() => banner.classList.add('visible'), 400);
+
+    document.getElementById('cookie-accept').addEventListener('click', () => {
+        localStorage.setItem('cookie_consent', 'accepted');
+        banner.classList.remove('visible');
+    });
+
+    document.getElementById('cookie-decline').addEventListener('click', () => {
+        localStorage.setItem('cookie_consent', 'declined');
+        banner.classList.remove('visible');
+    });
+})();
+
 // ── Add to Cart ──────────────────────────────────────────────────────────────
 
 const addToCartForm = document.getElementById('add-to-cart-form');

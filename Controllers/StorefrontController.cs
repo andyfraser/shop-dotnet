@@ -16,7 +16,7 @@ public class StorefrontController : BaseController
             SELECT p.*, c.name as CatName, c.slug as CatSlug
             FROM products p
             LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.active = 1 AND (p.featured = 1 OR 1=1)
+            WHERE p.active = 1 AND p.stock > 0
             ORDER BY p.featured DESC, p.created_at DESC
             LIMIT 8").ToList();
 
