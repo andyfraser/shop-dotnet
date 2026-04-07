@@ -21,3 +21,6 @@ appsettings.Development.json
 
 # macOS
 .DS_Store
+
+!wwwroot/images/*.svg
+wwwroot/images/
