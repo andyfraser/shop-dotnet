@@ -2,6 +2,10 @@
 
 A .NET 10 ASP.NET Core MVC port of a PHP e-commerce demo shop. Faithfully replicates all pages, routes, functionality, and UI of the original PHP application.
 
+![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 ## Features
 
 - Product catalogue with categories, search, and hierarchy navigation
