@@ -1,0 +1,79 @@
+@{
+    Layout = "_Layout";
+    var products = ViewData["Products"] as List<Product> ?? new();
+    var sort = ViewData["Sort"] as string ?? "name";
+    var perPage = ViewData["PerPageParam"] as string ?? "12";
+    var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var totalProducts = (int)(ViewData["TotalProducts"] ?? 0);
+}
+
+<div class="container">
+  <h1 class="page-title">All Products</h1>
+
+  @if (products.Any())
+  {
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">
+      <p style="color:var(--ink-2);font-size:.85rem;margin:0;">
+        @totalProducts product@(totalProducts != 1 ? "s" : "")
+      </p>
+      <form method="get" action="/products" style="display:flex;gap:.5rem;align-items:center;">
+        <select name="sort" onchange="this.form.submit()" style="padding:.3rem .5rem;border:1px solid var(--line);border-radius:4px;font-size:.85rem;">
+          <option value="name"       @(sort == "name"       ? "selected" : "")>Name</option>
+          <option value="featured"   @(sort == "featured"   ? "selected" : "")>Featured</option>
+          <option value="price_asc"  @(sort == "price_asc"  ? "selected" : "")>Price: Low to High</option>
+          <option value="price_desc" @(sort == "price_desc" ? "selected" : "")>Price: High to Low</option>
+        </select>
+        <select name="per_page" onchange="this.form.submit()" style="padding:.3rem .5rem;border:1px solid var(--line);border-radius:4px;font-size:.85rem;">
+          <option value="12"  @(perPage == "12"  ? "selected" : "")>12 per page</option>
+          <option value="24"  @(perPage == "24"  ? "selected" : "")>24 per page</option>
+          <option value="all" @(perPage == "all" ? "selected" : "")>All</option>
+        </select>
+      </form>
+    </div>
+    <div class="product-grid">
+      @foreach (var p in products)
+      {
+        <a href="/product/@p.Slug" class="product-card">
+          <div class="img-wrap">
+            @if (p.Featured)
+            {
+              <span class="product-badge badge-featured">Featured</span>
+            }
+            else if (V.IsNew(p.CreatedAt))
+            {
+              <span class="product-badge badge-new">New</span>
+            }
+            <img src="@V.ImgSrc(p.Image)" alt="@p.Name"
+                 onerror="this.onerror=null;this.src='/images/placeholder.svg'">
+          </div>
+          <div class="card-body">
+            <div class="card-cat">@(p.CatName ?? "")</div>
+            <div class="card-name">@p.Name</div>
+            <div class="card-price">@V.Money(ViewData["CurrencySymbol"] as string, p.Price)</div>
+            <div class="card-actions"><span class="btn btn-primary btn-sm">View</span></div>
+          </div>
+        </a>
+      }
+    </div>
+
+    @if (totalPages > 1)
+    {
+      <div style="display:flex;gap:.5rem;justify-content:center;margin-top:2rem;">
+        @for (int i = 1; i <= totalPages; i++)
+        {
+          <a href="/products?sort=@sort&per_page=@perPage&page=@i"
+             class="btn @(i == currentPage ? "btn-primary" : "btn-outline") btn-sm">@i</a>
+        }
+      </div>
+    }
+  }
+  else
+  {
+    <div class="empty-state">
+      <div class="icon">📦</div>
+      <h3>No products found</h3>
+      <p>Check back soon.</p>
+    </div>
+  }
+</div>

@@ -25,6 +25,45 @@ public class StorefrontController : BaseController
         return View();
     }
 
+    [HttpGet("products")]
+    public IActionResult Products(string sort = "name", string per_page = "12", int page = 1)
+    {
+        var validSorts = new Dictionary<string, string>
+        {
+            ["name"] = "p.name ASC",
+            ["featured"] = "p.featured DESC, p.name ASC",
+            ["price_asc"] = "p.price ASC",
+            ["price_desc"] = "p.price DESC",
+        };
+        var orderBy = validSorts.TryGetValue(sort, out var s) ? s : "p.name ASC";
+
+        using var conn = Db.GetConnection();
+        var totalProducts = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM products WHERE active=1");
+
+        int limit, offset = 0;
+        if (per_page == "all") { limit = totalProducts + 1; }
+        else { limit = int.TryParse(per_page, out var pp) ? pp : 12; offset = (page - 1) * limit; }
+
+        var products = conn.Query<Product>($@"
+            SELECT p.*, c.name as CatName
+            FROM products p LEFT JOIN categories c ON p.category_id=c.id
+            WHERE p.active=1
+            ORDER BY {orderBy} LIMIT @limit OFFSET @offset",
+            new { limit, offset }).ToList();
+
+        int perPageInt = per_page == "all" ? totalProducts : (int.TryParse(per_page, out var pp2) ? pp2 : 12);
+        int totalPages = perPageInt > 0 ? (int)Math.Ceiling((double)totalProducts / perPageInt) : 1;
+
+        ViewData["Title"] = "All Products";
+        ViewData["Sort"] = sort;
+        ViewData["PerPageParam"] = per_page;
+        ViewData["CurrentPage"] = page;
+        ViewData["TotalPages"] = totalPages;
+        ViewData["TotalProducts"] = totalProducts;
+        ViewData["Products"] = products;
+        return View();
+    }
+
     [HttpGet("search")]
     public IActionResult Search(string? q, string sort = "name", string per_page = "12", int page = 1)
     {
