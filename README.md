@@ -95,6 +95,8 @@ Services/
   SecurityService.cs         # CSRF + rate limiting
   AuthService.cs             # Session login/logout helpers
   CartService.cs             # Cart read/write
+tests/
+  ShopDotNet.Tests/          # xUnit test project
 Views/
   Shared/
     _Layout.cshtml           # Storefront layout
@@ -105,6 +107,14 @@ wwwroot/
   css/admin.css
   js/shop.js
   images/placeholder.svg
+```
+
+## Testing
+
+The project includes a suite of unit tests using xUnit and Moq.
+
+```bash
+/usr/local/share/dotnet/dotnet test tests/ShopDotNet.Tests/ShopDotNet.Tests.csproj
 ```
 
 ## Database settings
