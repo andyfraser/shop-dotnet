@@ -13,8 +13,12 @@ public class AuthController : BaseController
         ISettingsService settings,
         ICartService cart,
         IAuthService auth,
-        ISecurityService security)
-        : base(db, settings, cart, auth, security)
+        ISecurityService security,
+        IReviewService reviews,
+        IWishlistService wishlist,
+        IAddressService addresses,
+        IAttributeService attributes)
+        : base(db, settings, cart, auth, security, reviews, wishlist, addresses, attributes)
     {
     }
 

@@ -9,10 +9,14 @@ A .NET 10 ASP.NET Core MVC port of a PHP e-commerce demo shop. Faithfully replic
 ## Features
 
 - Product catalogue with categories, search, and hierarchy navigation
+- **Product Attributes & Specifications** (Brand, Color, etc.)
+- **Product Reviews & Ratings** with admin moderation
+- **Wishlist** for saved products
 - Session-based shopping cart with AJAX add-to-cart
 - Customer registration, login, and account management
+- **Multiple Shipping Addresses** management
 - Checkout with delivery options and order confirmation
-- Full admin panel: products, categories, users, orders, delivery options, settings
+- Full admin panel: products, categories, users, orders, **reviews**, delivery options, settings
 - Rate limiting on login and registration
 - Custom CSRF protection (session token, compatible with original shop.js)
 - Product image upload in admin

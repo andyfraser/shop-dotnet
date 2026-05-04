@@ -13,19 +13,31 @@ public abstract class BaseController : Controller
     protected readonly ICartService Cart;
     protected readonly IAuthService Auth;
     protected readonly ISecurityService Security;
+    protected readonly IReviewService ReviewService;
+    protected readonly IWishlistService WishlistService;
+    protected readonly IAddressService AddressService;
+    protected readonly IAttributeService AttributeService;
 
     protected BaseController(
         IDatabaseService db,
         ISettingsService settings,
         ICartService cart,
         IAuthService auth,
-        ISecurityService security)
+        ISecurityService security,
+        IReviewService reviews,
+        IWishlistService wishlist,
+        IAddressService addresses,
+        IAttributeService attributes)
     {
         Db = db;
         Settings = settings;
         Cart = cart;
         Auth = auth;
         Security = security;
+        ReviewService = reviews;
+        WishlistService = wishlist;
+        AddressService = addresses;
+        AttributeService = attributes;
     }
 
     protected UserSession? CurrentUser => Auth.GetCurrentUser(HttpContext.Session);

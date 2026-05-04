@@ -13,8 +13,12 @@ public class StorefrontController : BaseController
         ISettingsService settings,
         ICartService cart,
         IAuthService auth,
-        ISecurityService security)
-        : base(db, settings, cart, auth, security)
+        ISecurityService security,
+        IReviewService reviews,
+        IWishlistService wishlist,
+        IAddressService addresses,
+        IAttributeService attributes)
+        : base(db, settings, cart, auth, security, reviews, wishlist, addresses, attributes)
     {
     }
 
@@ -214,13 +218,49 @@ public class StorefrontController : BaseController
         var lowStock = int.Parse(Settings.Get("low_stock_threshold"));
         var flashSuccess = GetFlash("cart_success");
 
+        var productReviews = ReviewService.GetProductReviews(product.Id);
+        var productAttributes = AttributeService.GetProductAttributes(product.Id);
+        
+        var approvedReviews = productReviews.Where(r => r.Status == "approved").ToList();
+        product.ReviewCount = approvedReviews.Count;
+        product.AvgRating = approvedReviews.Any() ? approvedReviews.Average(r => r.Rating) : 0;
+        product.Attributes = productAttributes;
+
         ViewData["Title"] = product.Name;
         ViewData["Product"] = product;
         ViewData["Breadcrumb"] = breadcrumb;
         ViewData["RelatedProducts"] = related;
         ViewData["LowStockThreshold"] = lowStock;
         ViewData["FlashSuccess"] = flashSuccess;
+        ViewData["Reviews"] = approvedReviews;
+        
         return View();
+    }
+
+    [HttpPost("product/{slug}/review")]
+    public IActionResult PostReview(string slug, [FromForm] int rating, [FromForm] string? comment, [FromForm] string csrf_token)
+    {
+        if (!ValidateCsrf(csrf_token)) return BadRequest("Invalid CSRF token");
+        var user = CurrentUser;
+        if (user == null) return Redirect("/login");
+        if (user.IsAdmin) return BadRequest("Admins cannot leave reviews.");
+
+        using var conn = Db.GetConnection();
+        var product = conn.QueryFirstOrDefault<Product>("SELECT id FROM products WHERE slug=@slug", new { slug });
+        if (product == null) return NotFound();
+
+        var review = new Review
+        {
+            ProductId = product.Id,
+            UserId = user.Id,
+            Rating = rating,
+            Comment = comment,
+            Status = "pending" // Moderation
+        };
+        ReviewService.AddReview(review);
+
+        Flash("review_msg", "Thank you! Your review has been submitted for approval.");
+        return Redirect($"/product/{slug}");
     }
 
     [HttpGet("favicon.ico")]

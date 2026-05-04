@@ -382,6 +382,55 @@ select.form-control  { cursor: pointer; }
 }
 .site-footer a { color: rgba(255,255,255,.7); }
 
+/* ── Account Management ──────────────────────────────────────────────────── */
+.account-container {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+}
+.account-nav {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    position: sticky;
+    top: 100px;
+}
+.account-nav-item {
+    padding: .75rem 1rem;
+    border-radius: var(--radius);
+    font-size: .9rem;
+    font-weight: 500;
+    color: var(--ink-2);
+    transition: all var(--trans);
+}
+.account-nav-item:hover {
+    background: var(--warm);
+    color: var(--ink);
+}
+.account-nav-item.active {
+    background: var(--ink);
+    color: var(--white);
+}
+.account-main {
+    min-width: 0;
+}
+
+@media (max-width: 850px) {
+    .account-container {
+        grid-template-columns: 1fr;
+    }
+    .account-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: .5rem;
+        position: static;
+    }
+    .account-nav-item {
+        white-space: nowrap;
+    }
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 800px) {
     .two-col          { grid-template-columns: 1fr; }

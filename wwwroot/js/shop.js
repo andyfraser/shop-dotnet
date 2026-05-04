@@ -72,7 +72,44 @@ function updateCartBadge(count) {
     });
 })();
 
+// ── Wishlist ────────────────────────────────────────────────────────────────
+
+document.addEventListener('submit', async (e) => {
+    const form = e.target.closest('.wishlist-form');
+    if (!form) return;
+
+    e.preventDefault();
+
+    const btn = form.querySelector('[type=submit]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    try {
+        const data = await postAjax(form.action, {
+            product_id: form.querySelector('[name=product_id]').value,
+        });
+
+        if (data.ok) {
+            showToast(data.message, 'success');
+            btn.textContent = '♥';
+            btn.classList.add('active'); // Optional: style active heart
+        } else if (data.redirect) {
+            window.location.href = data.redirect;
+        } else {
+            showToast(data.message || 'Something went wrong.', 'error');
+            btn.textContent = originalText;
+        }
+    } catch {
+        showToast('Request failed. Please try again.', 'error');
+        btn.textContent = originalText;
+    } finally {
+        btn.disabled = false;
+    }
+});
+
 // ── Add to Cart ──────────────────────────────────────────────────────────────
+
 
 const addToCartForm = document.getElementById('add-to-cart-form');
 if (addToCartForm) {

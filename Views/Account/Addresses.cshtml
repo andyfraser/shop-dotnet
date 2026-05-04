@@ -1,0 +1,154 @@
+@{
+    Layout = "_Layout";
+    var addresses = ViewData["Addresses"] as List<UserAddress> ?? new();
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+    var addressMsg = TempData["flash_address_saved"] as string;
+}
+
+<div class="container">
+    <div class="account-container">
+        <aside class="account-nav">
+            <a href="/account" class="account-nav-item">Dashboard</a>
+            <a href="/account/orders" class="account-nav-item">My Orders</a>
+            <a href="/account/addresses" class="account-nav-item active">Addresses</a>
+            <a href="/wishlist" class="account-nav-item">Wishlist</a>
+            <a href="/logout" class="account-nav-item">Logout</a>
+        </aside>
+
+        <main class="account-main">
+            <h1 class="page-title">Shipping Addresses</h1>
+
+            @if (!string.IsNullOrEmpty(addressMsg))
+            {
+                <div class="alert alert-success">Address updated.</div>
+            }
+
+            <div class="address-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:1.5rem;margin-bottom:3rem;">
+                @foreach (var addr in addresses)
+                {
+                    <div class="card @(addr.IsDefault ? "border-primary" : "")" style="padding:1.5rem;display:flex;flex-direction:column;justify-content:space-between;">
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;">
+                                <strong style="font-size:1.1rem;">@addr.Label</strong>
+                                @if (addr.IsDefault)
+                                {
+                                    <span class="badge badge-primary">Default</span>
+                                }
+                            </div>
+                            <div style="font-size:.95rem;line-height:1.6;color:var(--text-muted);margin-bottom:1.5rem;">
+                                <div style="color:var(--ink);font-weight:600;margin-bottom:.25rem;">@addr.FullName</div>
+                                @addr.Address<br>
+                                @addr.City, @addr.Postcode<br>
+                                @addr.Country
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:1rem;">
+                            <button type="button" class="btn btn-sm btn-outline" 
+                                    data-id="@addr.Id"
+                                    data-label="@addr.Label"
+                                    data-fullname="@addr.FullName"
+                                    data-address="@addr.Address"
+                                    data-city="@addr.City"
+                                    data-postcode="@addr.Postcode"
+                                    data-country="@addr.Country"
+                                    data-default="@addr.IsDefault.ToString().ToLower()"
+                                    onclick="editAddress(this)">Edit</button>
+                            @if (!addr.IsDefault)
+                            {
+                                <form method="POST" action="/account/addresses/default" style="margin:0;">
+                                    <input type="hidden" name="csrf_token" value="@csrfToken">
+                                    <input type="hidden" name="id" value="@addr.Id">
+                                    <button type="submit" class="btn btn-sm btn-outline">Set Default</button>
+                                </form>
+                            }
+                            <form method="POST" action="/account/addresses/delete" style="margin:0;" onsubmit="return confirm('Delete this address?')">
+                                <input type="hidden" name="csrf_token" value="@csrfToken">
+                                <input type="hidden" name="id" value="@addr.Id">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+
+                <div class="card" style="border:2px dashed var(--border);background:none;display:flex;align-items:center;justify-content:center;padding:2rem;text-align:center;">
+                    <a href="javascript:void(0)" onclick="resetForm()" style="color:var(--text-muted);text-decoration:none;">
+                        <div style="font-size:2rem;margin-bottom:.5rem;">+</div>
+                        <div>Add New Address</div>
+                    </a>
+                </div>
+            </div>
+
+            <div id="address-form-container" class="card">
+                <h2 id="form-title" style="font-size:1.3rem;margin-bottom:1.5rem;">Add New Address</h2>
+                <form id="address-form" method="POST" action="/account/addresses/save">
+                    <input type="hidden" name="csrf_token" value="@csrfToken">
+                    <input type="hidden" name="id" id="addr-id" value="0">
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label>Address Label</label>
+                            <input type="text" name="Label" id="addr-label" class="form-control" placeholder="e.g. Home, Work" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Recipient Full Name</label>
+                            <input type="text" name="FullName" id="addr-fullname" class="form-control" placeholder="e.g. John Smith" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea name="address" id="addr-address" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="city" id="addr-city" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Postcode</label>
+                            <input type="text" name="postcode" id="addr-postcode" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Country</label>
+                        <input type="text" name="country" id="addr-country" class="form-control" value="United Kingdom" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+                            <input type="checkbox" name="IsDefault" id="addr-default" value="true">
+                            Set as default shipping address
+                        </label>
+                    </div>
+                    <div style="display:flex;gap:1rem;">
+                        <button type="submit" class="btn btn-primary">Save Address</button>
+                        <button type="button" id="cancel-edit" class="btn btn-outline" style="display:none;" onclick="resetForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+function editAddress(btn) {
+    const ds = btn.dataset;
+    document.getElementById('form-title').innerText = 'Edit Address';
+    document.getElementById('addr-id').value = ds.id;
+    document.getElementById('addr-label').value = ds.label;
+    document.getElementById('addr-fullname').value = ds.fullname;
+    document.getElementById('addr-address').value = ds.address;
+    document.getElementById('addr-city').value = ds.city;
+    document.getElementById('addr-postcode').value = ds.postcode;
+    document.getElementById('addr-country').value = ds.country;
+    document.getElementById('addr-default').checked = ds.default === 'true';
+    document.getElementById('cancel-edit').style.display = 'inline-flex';
+    
+    document.getElementById('address-form-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetForm() {
+    document.getElementById('form-title').innerText = 'Add New Address';
+    document.getElementById('address-form').reset();
+    document.getElementById('addr-id').value = '0';
+    document.getElementById('addr-country').value = 'United Kingdom';
+    document.getElementById('cancel-edit').style.display = 'none';
+}
+</script>

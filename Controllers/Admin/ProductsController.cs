@@ -17,9 +17,13 @@ public class ProductsController : AdminBaseController
         ICartService cart,
         IAuthService auth,
         ISecurityService security,
+        IReviewService reviews,
+        IWishlistService wishlist,
+        IAddressService addresses,
+        IAttributeService attributes,
         IWebHostEnvironment env,
         IConfiguration config)
-        : base(db, settings, cart, auth, security)
+        : base(db, settings, cart, auth, security, reviews, wishlist, addresses, attributes)
     {
         _env = env;
         _config = config;

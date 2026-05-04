@@ -20,6 +20,10 @@ builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IAttributeService, AttributeService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();

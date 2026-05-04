@@ -3,9 +3,12 @@
     var product = ViewData["Product"] as Product ?? new();
     var breadcrumb = ViewData["Breadcrumb"] as List<Category> ?? new();
     var related = ViewData["RelatedProducts"] as List<Product> ?? new();
+    var reviews = ViewData["Reviews"] as List<Review> ?? new();
     var lowStock = (int)(ViewData["LowStockThreshold"] ?? 10);
     var flashSuccess = ViewData["FlashSuccess"] as string;
+    var reviewMsg = TempData["flash_review_msg"] as string;
     var csrfToken = ViewData["CsrfToken"] as string ?? "";
+    var currentUser = ViewData["CurrentUser"] as UserSession;
 }
 
 <div class="container">
@@ -24,6 +27,10 @@
   @if (!string.IsNullOrEmpty(flashSuccess))
   {
     <div class="alert alert-success">@flashSuccess</div>
+  }
+  @if (!string.IsNullOrEmpty(reviewMsg))
+  {
+    <div class="alert alert-success">@reviewMsg</div>
   }
 
   <div class="product-detail">
@@ -44,6 +51,25 @@
       }
 
       <h1 class="product-title">@product.Name</h1>
+      
+      <div class="rating-summary" style="margin-bottom:1rem;">
+          @if (product.ReviewCount > 0)
+          {
+              <span class="stars" style="color:#f39c12">
+                  @for(int i=1; i<=5; i++) {
+                      @(i <= Math.Round(product.AvgRating) ? "★" : "☆")
+                  }
+              </span>
+              <span style="font-size:.9rem;color:var(--text-muted);margin-left:.5rem">
+                  @product.AvgRating.ToString("F1") (@product.ReviewCount reviews)
+              </span>
+          }
+          else
+          {
+              <span style="font-size:.9rem;color:var(--text-muted)">No reviews yet</span>
+          }
+      </div>
+
       <div class="product-price">@V.Money(ViewData["CurrencySymbol"] as string, product.Price)</div>
 
       @if (!string.IsNullOrEmpty(product.Description))
@@ -51,7 +77,7 @@
         <p class="product-desc">@Html.Raw(product.Description.Replace("\n", "<br>"))</p>
       }
 
-      <div>
+      <div style="margin-bottom: 1.5rem;">
         @if (product.Stock > lowStock)
         {
           <span class="badge badge-success">✓ In Stock</span>
@@ -66,31 +92,132 @@
         }
       </div>
 
-      @if (product.Stock > 0)
+      <div class="product-actions" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+          @if (product.Stock > 0)
+          {
+            <form method="POST" action="/product/@product.Slug" id="add-to-cart-form" style="margin:0">
+              <input type="hidden" name="csrf_token" value="@csrfToken">
+              <input type="hidden" name="product_id" value="@product.Id">
+              <input type="hidden" name="slug" value="@product.Slug">
+              <div class="qty-row">
+                <div class="form-group" style="margin:0">
+                  <label for="qty">Qty</label>
+                  <input type="number" id="qty" name="qty" class="form-control qty-input"
+                         value="1" min="1" max="@product.Stock" style="width:70px">
+                </div>
+                <button type="submit" name="add_to_cart" class="btn btn-primary" style="padding:.65rem 1.8rem;">
+                  Add to Cart
+                </button>
+              </div>
+            </form>
+          }
+
+          @if (currentUser != null)
+          {
+              <form method="POST" action="/wishlist/add" class="wishlist-form" style="margin:0">
+                  <input type="hidden" name="csrf_token" value="@csrfToken">
+                  <input type="hidden" name="product_id" value="@product.Id">
+                  <button type="submit" class="btn btn-outline" style="padding:.65rem 1.2rem;">
+                      ♥ Wishlist
+                  </button>
+              </form>
+          }
+      </div>
+
+      @if (product.Attributes.Any())
       {
-        <div id="cart-message"></div>
-        <form method="POST" action="/product/@product.Slug" id="add-to-cart-form">
-          <input type="hidden" name="csrf_token" value="@csrfToken">
-          <input type="hidden" name="product_id" value="@product.Id">
-          <input type="hidden" name="slug" value="@product.Slug">
-          <div class="qty-row">
-            <div class="form-group" style="margin:0">
-              <label for="qty">Quantity</label>
-              <input type="number" id="qty" name="qty" class="form-control qty-input"
-                     value="1" min="1" max="@product.Stock">
-            </div>
-            <button type="submit" name="add_to_cart" class="btn btn-primary" style="padding:.65rem 1.8rem;">
-              Add to Cart
-            </button>
+          <div class="product-specs" style="margin-top:2rem;border-top:1px solid var(--border);padding-top:1.5rem;">
+              <h3 style="font-size:1.1rem;margin-bottom:1rem;">Specifications</h3>
+              <table class="table-sm" style="width:100%;font-size:.9rem;">
+                  @foreach (var attr in product.Attributes)
+                  {
+                      <tr>
+                          <td style="color:var(--text-muted);width:30%;padding:.4rem 0;">@attr.AttributeName</td>
+                          <td style="font-weight:500;padding:.4rem 0;">@attr.Value</td>
+                      </tr>
+                  }
+              </table>
           </div>
-        </form>
       }
     </div>
   </div>
 
+  <div class="product-extra" style="margin-top:3rem;display:grid;grid-template-columns:1fr 350px;gap:3rem;">
+      <section class="reviews-section">
+          <h2 class="section-title">Customer Reviews</h2>
+          @if (reviews.Any())
+          {
+              <div class="reviews-list">
+                  @foreach (var r in reviews)
+                  {
+                      <div class="review-item" style="border-bottom:1px solid var(--border);padding:1.5rem 0;">
+                          <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;">
+                              <span style="font-weight:600;">@r.UserName</span>
+                              <span style="color:var(--text-muted);font-size:.85rem;">@r.CreatedAt</span>
+                          </div>
+                          <div class="stars" style="color:#f39c12;margin-bottom:.8rem;">
+                              @for(int i=1; i<=5; i++) {
+                                  @(i <= r.Rating ? "★" : "☆")
+                              }
+                          </div>
+                          @if (!string.IsNullOrEmpty(r.Comment))
+                          {
+                              <p style="font-size:.95rem;line-height:1.6;">@r.Comment</p>
+                          }
+                      </div>
+                  }
+              </div>
+          }
+          else
+          {
+              <p style="color:var(--text-muted);padding:2rem 0;text-align:center;background:var(--bg-light);border-radius:8px;">
+                  No reviews yet. Be the first to review this product!
+              </p>
+          }
+      </section>
+
+      <section class="review-form-section">
+          <div class="card" style="position:sticky;top:2rem;">
+              <h3 style="margin-bottom:1.2rem;">Write a Review</h3>
+              @if (currentUser == null)
+              {
+                  <p style="font-size:.9rem;color:var(--text-muted);">Please <a href="/login">sign in</a> to leave a review.</p>
+              }
+              else if (currentUser.IsAdmin)
+              {
+                  <p style="font-size:.9rem;color:var(--text-muted);">Admins cannot leave reviews.</p>
+              }
+              else
+              {
+                  <form method="POST" action="/product/@product.Slug/review">
+                      <input type="hidden" name="csrf_token" value="@csrfToken">
+                      <div class="form-group">
+                          <label>Rating</label>
+                          <select name="rating" class="form-control" required>
+                              <option value="5">5 Stars - Excellent</option>
+                              <option value="4">4 Stars - Very Good</option>
+                              <option value="3">3 Stars - Good</option>
+                              <option value="2">2 Stars - Fair</option>
+                              <option value="1">1 Star - Poor</option>
+                          </select>
+                      </div>
+                      <div class="form-group">
+                          <label>Your Comment</label>
+                          <textarea name="comment" class="form-control" rows="4" placeholder="What did you think of this product?"></textarea>
+                      </div>
+                      <button type="submit" class="btn btn-primary btn-block">Submit Review</button>
+                      <p style="font-size:.75rem;color:var(--text-muted);margin-top:1rem;text-align:center;">
+                          Reviews are moderated before being published.
+                      </p>
+                  </form>
+              }
+          </div>
+      </section>
+  </div>
+
   @if (related.Any())
   {
-    <section>
+    <section style="margin-top:4rem;border-top:1px solid var(--border);padding-top:3rem;">
       <h2 class="page-title" style="font-size:1.4rem;">Related Products</h2>
       <div class="product-grid">
         @foreach (var r in related)

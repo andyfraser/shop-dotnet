@@ -2,89 +2,108 @@
     Layout = "_Layout";
     var currentUser = ViewData["CurrentUser"] as UserSession ?? new();
     var orders = ViewData["Orders"] as List<Order> ?? new();
-    var csrfToken = ViewData["CsrfToken"] as string ?? "";
-    var addressSaved = TempData["flash_address_saved"] as string;
+    var addresses = ViewData["Addresses"] as List<UserAddress> ?? new();
+    var defaultAddress = addresses.FirstOrDefault(a => a.IsDefault) ?? addresses.FirstOrDefault();
 }
+
 <div class="container">
-  <h1 class="page-title">My Account</h1>
+    <div class="account-container">
+        <aside class="account-nav">
+            <a href="/account" class="account-nav-item active">Dashboard</a>
+            <a href="/account/orders" class="account-nav-item">My Orders</a>
+            <a href="/account/addresses" class="account-nav-item">Addresses</a>
+            <a href="/wishlist" class="account-nav-item">Wishlist</a>
+            <a href="/logout" class="account-nav-item">Logout</a>
+        </aside>
 
-  <div style="display:grid;grid-template-columns:280px 1fr;gap:2rem;align-items:start;">
-    <div class="card">
-      <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:600;margin-bottom:.25rem;">
-        @currentUser.Name
-      </div>
-      <div style="color:var(--ink-2);font-size:.85rem;margin-bottom:1rem;">@currentUser.Email</div>
-      <span class="badge @(currentUser.IsAdmin ? "badge-danger" : "badge-neutral")"
-            style="margin-bottom:1.2rem;display:inline-block;">
-        @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(currentUser.Role)
-      </span>
-      <div style="font-size:.8rem;color:var(--ink-2);">
-        Member since @(DateTime.TryParse(currentUser.CreatedAt, out var d) ? d.ToString("MMM yyyy") : "")
-      </div>
-      <hr style="margin:1.2rem 0;border:none;border-top:1px solid var(--line);">
+        <main class="account-main">
+            <h1 class="page-title">My Account</h1>
 
-      @if (!string.IsNullOrEmpty(addressSaved))
-      {
-        <div class="alert alert-success" style="margin-bottom:1rem;font-size:.8rem;">Address saved.</div>
-      }
-
-      <form method="POST" action="/account/address">
-        <input type="hidden" name="csrf_token" value="@csrfToken">
-        <div class="form-group" style="margin-bottom:.75rem;">
-          <label style="font-size:.8rem;font-weight:600;">Shipping Address</label>
-          <textarea name="address" class="form-control" rows="4"
-                    placeholder="Enter your default shipping address"
-                    style="font-size:.85rem;">@(currentUser.Address ?? "")</textarea>
-        </div>
-        <button type="submit" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">Save Address</button>
-      </form>
-
-      <hr style="margin:1.2rem 0;border:none;border-top:1px solid var(--line);">
-      <a href="/logout" class="btn btn-outline btn-sm" style="width:100%;justify-content:center;">Sign Out</a>
-    </div>
-
-    <div>
-      <h2 style="font-family:var(--font-display);font-size:1.3rem;margin-bottom:1rem;">Order History</h2>
-
-      @if (!orders.Any())
-      {
-        <div class="card empty-state" style="padding:2rem;">
-          <div class="icon">📦</div>
-          <h3>No orders yet</h3>
-          <p>
-            <a href="/" class="btn btn-primary" style="margin-top:.75rem;">Start Shopping</a>
-          </p>
-        </div>
-      }
-      else
-      {
-        <div class="card" style="padding:0;overflow:hidden;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Order #</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th><th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (var o in orders)
-              {
-                <tr>
-                  <td><strong>#@V.PadOrder(o.Id)</strong></td>
-                  <td>@(DateTime.TryParse(o.CreatedAt, out var od) ? od.ToString("dd MMM yyyy") : o.CreatedAt)</td>
-                  <td>@o.ItemCount item@(o.ItemCount != 1 ? "s" : "")</td>
-                  <td><strong>@V.Money(ViewData["CurrencySymbol"] as string, o.Total)</strong></td>
-                  <td>
-                    <span class="badge @V.StatusBadge(o.Status)">
-                      @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(o.Status)
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:3rem;">
+                <div class="card">
+                    <h2 style="font-size:1.2rem;margin-bottom:1.2rem;">Profile Information</h2>
+                    <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:600;margin-bottom:.25rem;">
+                        @currentUser.Name
+                    </div>
+                    <div style="color:var(--text-muted);font-size:.9rem;margin-bottom:1rem;">@currentUser.Email</div>
+                    <span class="badge @(currentUser.IsAdmin ? "badge-primary" : "badge-secondary")"
+                          style="margin-bottom:1.2rem;display:inline-block;">
+                        @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(currentUser.Role)
                     </span>
-                  </td>
-                  <td><a href="/order/confirm?id=@o.Id" class="btn btn-outline btn-sm">View</a></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
+                    <div style="font-size:.85rem;color:var(--text-muted);">
+                        Member since @(DateTime.TryParse(currentUser.CreatedAt, out var d) ? d.ToString("MMM yyyy") : "")
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 style="font-size:1.2rem;margin-bottom:1.2rem;">Default Shipping Address</h2>
+                    @if (defaultAddress != null)
+                    {
+                        <div style="font-size:.95rem;line-height:1.6;color:var(--text-muted);margin-bottom:1.5rem;">
+                            <strong style="display:block;margin-bottom:.25rem;color:var(--ink);">@defaultAddress.Label</strong>
+                            <div style="margin-bottom:.5rem;">@defaultAddress.FullName</div>
+                            @defaultAddress.Address<br>
+                            @defaultAddress.City, @defaultAddress.Postcode<br>
+                            @defaultAddress.Country
+                        </div>
+                        <a href="/account/addresses" class="btn btn-outline btn-sm">Manage Addresses</a>
+                    }
+                    else
+                    {
+                        <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:.95rem;">No shipping addresses saved yet.</p>
+                        <a href="/account/addresses" class="btn btn-primary btn-sm">Add Address</a>
+                    }
+                </div>
+            </div>
+
+            <h2 style="font-family:var(--font-display);font-size:1.4rem;margin-bottom:1.5rem;">Recent Orders</h2>
+
+            @if (!orders.Any())
+            {
+                <div class="card" style="text-align:center;padding:3rem;">
+                    <div style="font-size:3rem;margin-bottom:1rem;">📦</div>
+                    <h3 style="margin-bottom:.5rem;">No orders yet</h3>
+                    <p style="color:var(--text-muted);margin-bottom:1.5rem;">When you place orders, they will appear here.</p>
+                    <a href="/" class="btn btn-primary">Start Shopping</a>
+                </div>
+            }
+            else
+            {
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in orders)
+                            {
+                                <tr>
+                                    <td><strong>#@o.Id.ToString("D6")</strong></td>
+                                    <td>@(DateTime.TryParse(o.CreatedAt, out var od) ? od.ToString("dd MMM yyyy") : o.CreatedAt)</td>
+                                    <td>@o.ItemCount item@(o.ItemCount != 1 ? "s" : "")</td>
+                                    <td><strong>@V.Money(ViewData["CurrencySymbol"] as string, o.Total)</strong></td>
+                                    <td>
+                                        <span class="badge @V.StatusBadge(o.Status)">
+                                            @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(o.Status)
+                                        </span>
+                                    </td>
+                                    <td><a href="/order/confirm?id=@o.Id" class="btn btn-sm btn-outline">View</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:1.5rem;">
+                    <a href="/account/orders" class="btn btn-link">View all orders →</a>
+                </div>
+            }
+        </main>
     </div>
-  </div>
 </div>

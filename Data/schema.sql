@@ -34,6 +34,19 @@ CREATE TABLE IF NOT EXISTS users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS user_addresses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    full_name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    city TEXT NOT NULL,
+    postcode TEXT NOT NULL,
+    country TEXT NOT NULL,
+    is_default INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER REFERENCES users(id),
@@ -45,6 +58,15 @@ CREATE TABLE IF NOT EXISTS orders (
     delivery_cost REAL DEFAULT 0,
     customer_email TEXT,
     customer_name TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS order_status_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    status TEXT NOT NULL,
+    notes TEXT,
+    created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -62,6 +84,43 @@ CREATE TABLE IF NOT EXISTS order_items (
     product_id INTEGER REFERENCES products(id),
     quantity INTEGER NOT NULL,
     unit_price REAL NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS wishlists (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, product_id)
+);
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL,
+    comment TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS attributes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS attribute_values (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    attribute_id INTEGER NOT NULL REFERENCES attributes(id) ON DELETE CASCADE,
+    value TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS product_attribute_values (
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    attribute_value_id INTEGER NOT NULL REFERENCES attribute_values(id) ON DELETE CASCADE,
+    PRIMARY KEY (product_id, attribute_value_id)
 );
 
 CREATE TABLE IF NOT EXISTS rate_limits (
@@ -83,6 +142,11 @@ CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_a
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_wishlists_user ON wishlists(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
+CREATE INDEX IF NOT EXISTS idx_user_addresses_user ON user_addresses(user_id);
+CREATE INDEX IF NOT EXISTS idx_attr_val_attr ON attribute_values(attribute_id);
+CREATE INDEX IF NOT EXISTS idx_prod_attr_val_val ON product_attribute_values(attribute_value_id);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_lookup ON rate_limits(action, ip_address, created_at);
 
 INSERT OR IGNORE INTO categories (id, name, slug, parent_id, description, icon) VALUES
@@ -128,6 +192,18 @@ INSERT OR IGNORE INTO products (id, name, slug, description, price, stock, categ
 (20, 'Cat Lounge and Play Scratcher', 'cat-lounge-and-play-scratcher', 'A cozy home for cats featuring a roomy condo, relaxing lounge basket, and two perfectly placed perches.', 88, 6, 20, 'img_69bd63cfc64980.14864876.webp', 1, 0, '2026-03-20 15:12:15'),
 (21, 'Ninja 7.6L Foodi Dual Zone Air Fryer and Dehydrator', 'ninja-7-6l-foodi-dual-zone-air-fryer-and-dehydrator', 'The air fryer that cooks 2 foods, 2 ways, and finishes at the same time. Extra-large 7.6L capacity.', 200, 22, 9, 'img_69cfa1d4e5f6c3.95570107.jpg', 1, 0, '2026-04-03 11:17:40'),
 (22, 'McGregor 23cm Cordless Grass Trimmer - 18V', 'mcgregor-23cm-cordless-grass-trimmer-18v', 'This McGregor 18V 23cm grass trimmer is ideal for cutting fine to coarse grass - anywhere.', 36, 14, 10, 'img_69d25436496576.37754497.jpg', 1, 0, '2026-04-05 12:23:18');
+
+INSERT OR IGNORE INTO attributes (id, name) VALUES (1, 'Brand'), (2, 'Color');
+
+INSERT OR IGNORE INTO attribute_values (id, attribute_id, value) VALUES 
+(1, 1, 'ProBook'), (2, 1, 'UltraPhone'), (3, 1, 'Studio'), (4, 1, 'Oxford'), 
+(5, 1, 'Merino'), (6, 1, 'Espresso'), (7, 1, 'GardenPro'), (8, 1, 'MiniBook'),
+(9, 2, 'Black'), (10, 2, 'Silver'), (11, 2, 'White'), (12, 2, 'Blue'), (13, 2, 'Red'), (14, 2, 'Green');
+
+-- Link products to attributes
+INSERT OR IGNORE INTO product_attribute_values (product_id, attribute_value_id) VALUES (1, 1), (1, 10), (8, 8), (8, 11);
+INSERT OR IGNORE INTO product_attribute_values (product_id, attribute_value_id) VALUES (2, 2), (2, 9), (11, 2), (11, 10);
+INSERT OR IGNORE INTO product_attribute_values (product_id, attribute_value_id) VALUES (3, 3), (3, 9), (9, 3), (9, 12);
 
 INSERT OR IGNORE INTO delivery_options (id, name, price, active, min_order_total) VALUES
 (1, 'Standard Delivery', 3.99, 1, 0),

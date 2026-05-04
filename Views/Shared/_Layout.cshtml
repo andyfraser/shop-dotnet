@@ -41,6 +41,10 @@
     <nav class="header-actions">
       @if (currentUser != null)
       {
+        <a href="/wishlist">♥ Wishlist</a>
+      }
+      @if (currentUser != null)
+      {
         <a href="/account">👤 @currentUser.Name</a>
         @if (currentUser.IsAdmin)
         {

@@ -1,0 +1,69 @@
+@{
+    Layout = "_Layout";
+    var items = ViewData["Items"] as List<Wishlist> ?? new();
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+    var wishlistMsg = TempData["flash_wishlist_msg"] as string;
+}
+
+<div class="container">
+    <div class="account-container">
+        <aside class="account-nav">
+            <a href="/account" class="account-nav-item">Dashboard</a>
+            <a href="/account/orders" class="account-nav-item">My Orders</a>
+            <a href="/account/addresses" class="account-nav-item">Addresses</a>
+            <a href="/wishlist" class="account-nav-item active">Wishlist</a>
+            <a href="/logout" class="account-nav-item">Logout</a>
+        </aside>
+
+        <main class="account-main">
+            <h1 class="page-title">My Wishlist</h1>
+
+            @if (!string.IsNullOrEmpty(wishlistMsg))
+            {
+                <div class="alert alert-success">@wishlistMsg</div>
+            }
+
+            @if (items.Any())
+            {
+                <div class="wishlist-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:2rem;">
+                    @foreach (var item in items)
+                    {
+                        <div class="product-card" style="position:relative;">
+                            <form method="POST" action="/wishlist/remove" style="position:absolute;top:10px;right:10px;z-index:10;">
+                                <input type="hidden" name="csrf_token" value="@csrfToken">
+                                <input type="hidden" name="product_id" value="@item.ProductId">
+                                <button type="submit" class="btn btn-sm btn-danger" style="border-radius:50%;width:30px;height:30px;padding:0;" title="Remove">×</button>
+                            </form>
+                            <a href="/product/@item.ProductSlug">
+                                <div class="img-wrap">
+                                    <img src="@V.ImgSrc(item.ProductImage)" alt="@item.ProductName"
+                                         onerror="this.onerror=null;this.src='/images/placeholder.svg'">
+                                </div>
+                                <div class="card-body">
+                                    <div class="card-name">@item.ProductName</div>
+                                    <div class="card-price">@V.Money(ViewData["CurrencySymbol"] as string, item.ProductPrice)</div>
+                                </div>
+                            </a>
+                            <div style="padding:0 1rem 1rem;">
+                                <form method="POST" action="/product/@item.ProductSlug" class="add-to-cart-simple">
+                                    <input type="hidden" name="csrf_token" value="@csrfToken">
+                                    <input type="hidden" name="product_id" value="@item.ProductId">
+                                    <input type="hidden" name="qty" value="1">
+                                    <button type="submit" class="btn btn-primary btn-block btn-sm">Add to Cart</button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="text-align:center;padding:4rem 0;background:var(--bg-light);border-radius:12px;">
+                    <div style="font-size:3rem;margin-bottom:1rem;">♥</div>
+                    <p style="color:var(--text-muted);margin-bottom:2rem;">Your wishlist is empty.</p>
+                    <a href="/products" class="btn btn-primary">Go Shopping</a>
+                </div>
+            }
+        </main>
+    </div>
+</div>

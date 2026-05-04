@@ -2,6 +2,7 @@
     Layout = "_Layout";
     var navTree = ViewData["NavTree"] as List<Category> ?? new();
     var featured = ViewData["FeaturedProducts"] as List<Product> ?? new();
+    var currentUser = ViewData["CurrentUser"] as UserSession;
 }
 
 <div class="hero">
@@ -38,28 +39,40 @@
     <div class="product-grid">
       @foreach (var p in featured)
       {
-        <a href="/product/@p.Slug" class="product-card">
-          <div class="img-wrap">
-            @if (p.Featured)
-            {
-              <span class="product-badge badge-featured">Featured</span>
-            }
-            else if (V.IsNew(p.CreatedAt))
-            {
-              <span class="product-badge badge-new">New</span>
-            }
-            <img src="@V.ImgSrc(p.Image)" alt="@p.Name" loading="lazy"
-                 onerror="this.onerror=null;this.src='/images/placeholder.svg'">
-          </div>
-          <div class="card-body">
-            <div class="card-cat">@(p.CatName ?? "Uncategorised")</div>
-            <div class="card-name">@p.Name</div>
-            <div class="card-price">@V.Money(ViewData["CurrencySymbol"] as string, p.Price)</div>
+        <div class="product-card">
+          <a href="/product/@p.Slug">
+            <div class="img-wrap">
+              @if (p.Featured)
+              {
+                <span class="product-badge badge-featured">Featured</span>
+              }
+              else if (V.IsNew(p.CreatedAt))
+              {
+                <span class="product-badge badge-new">New</span>
+              }
+              <img src="@V.ImgSrc(p.Image)" alt="@p.Name" loading="lazy"
+                   onerror="this.onerror=null;this.src='/images/placeholder.svg'">
+            </div>
+            <div class="card-body">
+              <div class="card-cat">@(p.CatName ?? "Uncategorised")</div>
+              <div class="card-name">@p.Name</div>
+              <div class="card-price">@V.Money(ViewData["CurrencySymbol"] as string, p.Price)</div>
+            </div>
+          </a>
+          <div class="card-body" style="padding-top:0;">
             <div class="card-actions">
-              <span class="btn btn-primary btn-sm">View Product</span>
+              <a href="/product/@p.Slug" class="btn btn-primary btn-sm">View Product</a>
+              @if (currentUser != null)
+              {
+                <form method="POST" action="/wishlist/add" class="wishlist-form" style="display:inline-block;margin:0;">
+                  <input type="hidden" name="csrf_token" value="@ViewData["CsrfToken"]">
+                  <input type="hidden" name="product_id" value="@p.Id">
+                  <button type="submit" class="btn btn-outline btn-sm" title="Add to Wishlist">♥</button>
+                </form>
+              }
             </div>
           </div>
-        </a>
+        </div>
       }
     </div>
   </section>

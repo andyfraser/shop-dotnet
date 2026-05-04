@@ -1,0 +1,85 @@
+@{
+    Layout = "_AdminLayout";
+    var reviews = ViewData["Reviews"] as List<Review> ?? new();
+    var csrfToken = ViewData["CsrfToken"] as string ?? "";
+    var flashMsg = ViewData["FlashMsg"] as string;
+}
+
+<div class="admin-topbar">
+  <h1>Manage Reviews</h1>
+  <div class="actions">
+    <!-- No global actions for reviews yet -->
+  </div>
+</div>
+
+<div class="content">
+  @if (!string.IsNullOrEmpty(flashMsg))
+  {
+    <div class="alert alert-success">@flashMsg</div>
+  }
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:60px">ID</th>
+        <th>Product</th>
+        <th>User</th>
+        <th>Rating</th>
+        <th>Comment</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var r in reviews)
+      {
+        <tr>
+          <td>#@r.Id</td>
+          <td>
+            <strong>@r.ProductName</strong>
+          </td>
+          <td>@r.UserName</td>
+          <td>
+            <span style="color:var(--gold)">
+              @for(int i=1; i<=5; i++) {
+                @(i <= r.Rating ? "★" : "☆")
+              }
+            </span>
+          </td>
+          <td style="max-width:300px;font-size:.85rem;color:var(--ink-2);">
+            @r.Comment
+          </td>
+          <td>
+            <span class="badge @(r.Status == "approved" ? "badge-success" : (r.Status == "pending" ? "badge-warning" : "badge-danger"))">
+              @System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(r.Status)
+            </span>
+          </td>
+          <td style="font-size:.85rem;color:var(--ink-2)">@r.CreatedAt</td>
+          <td>
+            <div style="display:flex;gap:.5rem;">
+              @if (r.Status != "approved")
+              {
+                <form method="POST" action="/admin/reviews/status" style="margin:0;">
+                  <input type="hidden" name="csrf_token" value="@csrfToken">
+                  <input type="hidden" name="id" value="@r.Id">
+                  <input type="hidden" name="status" value="approved">
+                  <button type="submit" class="btn btn-outline btn-sm">Approve</button>
+                </form>
+              }
+              @if (r.Status != "rejected")
+              {
+                <form method="POST" action="/admin/reviews/status" style="margin:0;">
+                  <input type="hidden" name="csrf_token" value="@csrfToken">
+                  <input type="hidden" name="id" value="@r.Id">
+                  <input type="hidden" name="status" value="rejected">
+                  <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                </form>
+              }
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

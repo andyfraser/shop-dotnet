@@ -31,8 +31,7 @@
           <h2 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:1.2rem;">Delivery Details</h2>
           <div class="form-group">
             <label for="name">Full Name <span style="color:var(--accent)">*</span></label>
-            <input type="text" id="name" name="name" class="form-control" value="@name"
-                   @(isGuest ? "" : "readonly") required>
+            <input type="text" id="name" name="name" class="form-control" value="@name" required>
           </div>
           <div class="form-group">
             <label for="email">Email <span style="color:var(--accent)">*</span></label>
@@ -41,6 +40,22 @@
           </div>
           <div class="form-group">
             <label for="address">Shipping Address <span style="color:var(--accent)">*</span></label>
+            @if (!isGuest)
+            {
+                var userAddresses = ViewData["Addresses"] as List<UserAddress> ?? new();
+                if (userAddresses.Any())
+                {
+                    <select id="saved-addresses" class="form-control" style="margin-bottom:.75rem;" onchange="selectAddress(this)">
+                        <option value="">-- Select a saved address or enter new --</option>
+                        @foreach (var a in userAddresses)
+                        {
+                            var addrPart = $"{a.Address}\n{a.City}, {a.Postcode}\n{a.Country}".Trim();
+                            <option value="@addrPart" data-fullname="@a.FullName" @(a.IsDefault ? "selected" : "")>@a.Label (@a.City)</option>
+                        }
+                        <option value="new">Enter new address...</option>
+                    </select>
+                }
+            }
             <textarea id="address" name="address" class="form-control"
                       placeholder="Enter your full shipping address" rows="4">@address</textarea>
           </div>
@@ -123,6 +138,25 @@ function updateTotal(price) {
   document.getElementById('delivery-cost').innerText = currencySymbol + price.toFixed(2);
   document.getElementById('final-total').innerText = currencySymbol + (baseTotal + price).toFixed(2);
   document.getElementById('place-order-btn').disabled = false;
+}
+
+function selectAddress(sel) {
+  const val = sel.value;
+  const area = document.getElementById('address');
+  const nameInput = document.getElementById('name');
+  
+  if (val === 'new') {
+    area.value = '';
+    nameInput.value = '';
+    area.focus();
+  } else if (val) {
+    area.value = val.trim();
+    const opt = sel.options[sel.selectedIndex];
+    const fullName = opt.getAttribute('data-fullname');
+    if (fullName) {
+      nameInput.value = fullName;
+    }
+  }
 }
 
 window.addEventListener('load', () => {

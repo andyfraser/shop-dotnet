@@ -13,8 +13,12 @@ public class CheckoutController : BaseController
         ISettingsService settings,
         ICartService cart,
         IAuthService auth,
-        ISecurityService security)
-        : base(db, settings, cart, auth, security)
+        ISecurityService security,
+        IReviewService reviews,
+        IWishlistService wishlist,
+        IAddressService addresses,
+        IAttributeService attributes)
+        : base(db, settings, cart, auth, security, reviews, wishlist, addresses, attributes)
     {
     }
 
@@ -31,14 +35,33 @@ public class CheckoutController : BaseController
             new { total }).ToList();
 
         var user = CurrentUser;
+        var addresses = user != null ? AddressService.GetUserAddresses(user.Id) : new List<UserAddress>();
+        var defaultAddr = addresses.FirstOrDefault(a => a.IsDefault) ?? addresses.FirstOrDefault();
+        
+        string address = "";
+        string name = user?.Name ?? "";
+        if (defaultAddr != null)
+        {
+            address = $"{defaultAddr.Address}\n{defaultAddr.City}, {defaultAddr.Postcode}\n{defaultAddr.Country}".Trim();
+            if (!string.IsNullOrWhiteSpace(defaultAddr.FullName))
+            {
+                name = defaultAddr.FullName;
+            }
+        }
+        else if (user != null && !string.IsNullOrEmpty(user.Address))
+        {
+            address = user.Address.Trim();
+        }
+
         ViewData["Title"] = "Checkout";
         ViewData["Items"] = items;
         ViewData["Total"] = total;
         ViewData["DeliveryOptions"] = deliveryOptions;
         ViewData["IsGuest"] = user == null;
-        ViewData["Name"] = user?.Name ?? "";
+        ViewData["Name"] = name;
         ViewData["Email"] = user?.Email ?? "";
-        ViewData["Address"] = user?.Address ?? "";
+        ViewData["Address"] = address;
+        ViewData["Addresses"] = addresses;
         ViewData["Notes"] = "";
         ViewData["DeliveryId"] = "";
         ViewData["Errors"] = Array.Empty<string>();
