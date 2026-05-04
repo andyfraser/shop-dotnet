@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ShopDotNet.Models;
+using ShopDotNet.Services;
 using Dapper;
 
 namespace ShopDotNet.Controllers;
@@ -7,6 +8,16 @@ namespace ShopDotNet.Controllers;
 [Route("")]
 public class CheckoutController : BaseController
 {
+    public CheckoutController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security)
+        : base(db, settings, cart, auth, security)
+    {
+    }
+
     [HttpGet("checkout")]
     public IActionResult Index()
     {

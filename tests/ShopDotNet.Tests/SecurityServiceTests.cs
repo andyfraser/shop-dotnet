@@ -8,6 +8,17 @@ namespace ShopDotNet.Tests;
 
 public class SecurityServiceTests
 {
+    private readonly Mock<IDatabaseService> _mockDb;
+    private readonly Mock<ISettingsService> _mockSettings;
+    private readonly SecurityService _securityService;
+
+    public SecurityServiceTests()
+    {
+        _mockDb = new Mock<IDatabaseService>();
+        _mockSettings = new Mock<ISettingsService>();
+        _securityService = new SecurityService(_mockDb.Object, _mockSettings.Object);
+    }
+
     [Fact]
     public void GetOrCreateCsrfToken_CreatesNew_IfNoneExists()
     {
@@ -17,7 +28,7 @@ public class SecurityServiceTests
         mockSession.Setup(s => s.Set("csrf_token", It.IsAny<byte[]>()))
             .Callback<string, byte[]>((k, v) => value = v);
 
-        var token = SecurityService.GetOrCreateCsrfToken(mockSession.Object);
+        var token = _securityService.GetOrCreateCsrfToken(mockSession.Object);
 
         Assert.NotNull(token);
         Assert.Equal(64, token.Length); // 32 bytes hex encoded
@@ -32,7 +43,7 @@ public class SecurityServiceTests
         byte[] existingBytes = Encoding.UTF8.GetBytes(existingToken);
         mockSession.Setup(s => s.TryGetValue("csrf_token", out existingBytes)).Returns(true);
 
-        var token = SecurityService.GetOrCreateCsrfToken(mockSession.Object);
+        var token = _securityService.GetOrCreateCsrfToken(mockSession.Object);
 
         Assert.Equal(existingToken, token);
         mockSession.Verify(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()), Times.Never);
@@ -46,7 +57,7 @@ public class SecurityServiceTests
         byte[] tokenBytes = Encoding.UTF8.GetBytes(token);
         mockSession.Setup(s => s.TryGetValue("csrf_token", out tokenBytes)).Returns(true);
 
-        var result = SecurityService.ValidateCsrf(mockSession.Object, token);
+        var result = _securityService.ValidateCsrf(mockSession.Object, token);
 
         Assert.True(result);
     }
@@ -59,7 +70,7 @@ public class SecurityServiceTests
         byte[] storedBytes = Encoding.UTF8.GetBytes("different");
         mockSession.Setup(s => s.TryGetValue("csrf_token", out storedBytes)).Returns(true);
 
-        var result = SecurityService.ValidateCsrf(mockSession.Object, token);
+        var result = _securityService.ValidateCsrf(mockSession.Object, token);
 
         Assert.False(result);
     }
@@ -68,7 +79,7 @@ public class SecurityServiceTests
     public void ValidateCsrf_ReturnsFalse_WhenNull()
     {
         var mockSession = new Mock<ISession>();
-        var result = SecurityService.ValidateCsrf(mockSession.Object, null);
+        var result = _securityService.ValidateCsrf(mockSession.Object, null);
         Assert.False(result);
     }
 }

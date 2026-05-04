@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ShopDotNet.Models;
+using ShopDotNet.Services;
 using Dapper;
 
 namespace ShopDotNet.Controllers.Admin;
@@ -7,6 +8,16 @@ namespace ShopDotNet.Controllers.Admin;
 [Route("admin/categories")]
 public class CategoriesController : AdminBaseController
 {
+    public CategoriesController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security)
+        : base(db, settings, cart, auth, security)
+    {
+    }
+
     [HttpGet("")]
     public IActionResult Index()
     {

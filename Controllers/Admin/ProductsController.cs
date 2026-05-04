@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ShopDotNet.Models;
+using ShopDotNet.Services;
 using Dapper;
 
 namespace ShopDotNet.Controllers.Admin;
@@ -10,7 +11,15 @@ public class ProductsController : AdminBaseController
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _config;
 
-    public ProductsController(IWebHostEnvironment env, IConfiguration config)
+    public ProductsController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security,
+        IWebHostEnvironment env,
+        IConfiguration config)
+        : base(db, settings, cart, auth, security)
     {
         _env = env;
         _config = config;

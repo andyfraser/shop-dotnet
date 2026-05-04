@@ -10,13 +10,14 @@ namespace ShopDotNet.Tests;
 public class CartServiceTests
 {
     private readonly Mock<ISession> _mockSession;
+    private readonly Mock<IDatabaseService> _mockDb;
     private readonly CartService _cartService;
 
     public CartServiceTests()
     {
         _mockSession = new Mock<ISession>();
-        // DatabaseService is injected but not used for most methods
-        _cartService = new CartService(null);
+        _mockDb = new Mock<IDatabaseService>();
+        _cartService = new CartService(_mockDb.Object);
     }
 
     private void SetupSession(Dictionary<int, int> cart)

@@ -8,6 +8,16 @@ namespace ShopDotNet.Controllers;
 [Route("")]
 public class AccountController : BaseController
 {
+    public AccountController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security)
+        : base(db, settings, cart, auth, security)
+    {
+    }
+
     [HttpGet("account")]
     public IActionResult Index()
     {
@@ -46,7 +56,7 @@ public class AccountController : BaseController
 
         // Update session
         user.Address = address;
-        AuthService.Login(HttpContext.Session, user);
+        Auth.Login(HttpContext.Session, user);
 
         Flash("address_saved", "1");
         return Redirect("/account");

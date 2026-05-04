@@ -8,9 +8,15 @@ namespace ShopDotNet.Controllers;
 [Route("")]
 public class AuthController : BaseController
 {
-    private readonly SecurityService _security;
-
-    public AuthController(SecurityService security) => _security = security;
+    public AuthController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security)
+        : base(db, settings, cart, auth, security)
+    {
+    }
 
     [HttpGet("login")]
     public IActionResult Login()
@@ -32,7 +38,7 @@ public class AuthController : BaseController
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var errors = new List<string>();
 
-        if (_security.IsRateLimited("login", ip))
+        if (Security.IsRateLimited("login", ip))
         {
             errors.Add("Too many login attempts. Please try again later.");
             ViewData["Title"] = "Sign In";
@@ -56,12 +62,12 @@ public class AuthController : BaseController
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
-                _security.RecordAttempt("login", ip);
+                Security.RecordAttempt("login", ip);
                 errors.Add("Invalid email or password.");
             }
             else
             {
-                _security.ClearAttempts("login", ip);
+                Security.ClearAttempts("login", ip);
                 var session = new UserSession
                 {
                     Id = user.Id,
@@ -71,7 +77,7 @@ public class AuthController : BaseController
                     Address = user.Address,
                     CreatedAt = user.CreatedAt,
                 };
-                AuthService.Login(HttpContext.Session, session);
+                Auth.Login(HttpContext.Session, session);
 
                 var redirect = HttpContext.Session.GetString("redirect_after_login") ?? "/";
                 HttpContext.Session.Remove("redirect_after_login");
@@ -108,7 +114,7 @@ public class AuthController : BaseController
         var errors = new List<string>();
         var minLen = int.Parse(Settings.Get("password_min_length"));
 
-        if (_security.IsRateLimited("register", ip))
+        if (Security.IsRateLimited("register", ip))
         {
             errors.Add("Too many registration attempts. Please try again later.");
             ViewData["Title"] = "Create Account";
@@ -140,7 +146,7 @@ public class AuthController : BaseController
             }
             else
             {
-                _security.ClearAttempts("register", ip);
+                Security.ClearAttempts("register", ip);
                 var hash = BCrypt.Net.BCrypt.HashPassword(password);
                 conn.Execute(
                     "INSERT INTO users (name, email, password_hash, role) VALUES (@name, @email, @hash, 'customer')",
@@ -152,13 +158,13 @@ public class AuthController : BaseController
                     Id = user.Id, Name = user.Name, Email = user.Email,
                     Role = user.Role, CreatedAt = user.CreatedAt,
                 };
-                AuthService.Login(HttpContext.Session, session);
+                Auth.Login(HttpContext.Session, session);
                 return Redirect("/");
             }
         }
         else
         {
-            _security.RecordAttempt("register", ip);
+            Security.RecordAttempt("register", ip);
         }
 
         ViewData["Title"] = "Create Account";
@@ -171,7 +177,7 @@ public class AuthController : BaseController
     [HttpGet("logout")]
     public IActionResult Logout()
     {
-        AuthService.Logout(HttpContext.Session);
+        Auth.Logout(HttpContext.Session);
         return Redirect("/");
     }
 }

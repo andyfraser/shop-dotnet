@@ -1,10 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
+using ShopDotNet.Services;
 
 namespace ShopDotNet.Controllers.Admin;
 
 [Route("admin/settings")]
 public class SettingsController : AdminBaseController
 {
+    public SettingsController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security)
+        : base(db, settings, cart, auth, security)
+    {
+    }
+
     [HttpGet("")]
     public IActionResult Index()
     {

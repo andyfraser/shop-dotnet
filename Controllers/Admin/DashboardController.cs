@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ShopDotNet.Services;
 using Dapper;
 
 namespace ShopDotNet.Controllers.Admin;
@@ -6,6 +7,16 @@ namespace ShopDotNet.Controllers.Admin;
 [Route("admin")]
 public class DashboardController : AdminBaseController
 {
+    public DashboardController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security)
+        : base(db, settings, cart, auth, security)
+    {
+    }
+
     [HttpGet("")]
     [HttpGet("dashboard")]
     public IActionResult Index()

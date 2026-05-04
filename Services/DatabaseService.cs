@@ -4,7 +4,7 @@ using BCrypt.Net;
 
 namespace ShopDotNet.Services;
 
-public class DatabaseService
+public class DatabaseService : IDatabaseService
 {
     private readonly string _connectionString;
 

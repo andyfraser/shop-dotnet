@@ -15,16 +15,17 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromHours(2);
 });
 
-builder.Services.AddSingleton<DatabaseService>();
-builder.Services.AddSingleton<SettingsService>();
-builder.Services.AddScoped<SecurityService>();
-builder.Services.AddScoped<CartService>();
+builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+builder.Services.AddSingleton<ISettingsService, SettingsService>();
+builder.Services.AddScoped<ISecurityService, SecurityService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
 // Ensure DB is initialized at startup
-app.Services.GetRequiredService<DatabaseService>();
+app.Services.GetRequiredService<IDatabaseService>();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -55,6 +56,7 @@ if (!string.IsNullOrEmpty(imagesPath))
 
 app.UseRouting();
 app.UseSession();
+app.UseMiddleware<ShopDotNet.Middleware.AdminMiddleware>();
 
 app.MapControllers();
 

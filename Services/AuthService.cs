@@ -3,23 +3,23 @@ using ShopDotNet.Models;
 
 namespace ShopDotNet.Services;
 
-public class AuthService
+public class AuthService : IAuthService
 {
     private const string SessionKey = "user_session";
 
-    public static UserSession? GetCurrentUser(ISession session)
+    public UserSession? GetCurrentUser(ISession session)
     {
         var json = session.GetString(SessionKey);
         if (json == null) return null;
         return JsonSerializer.Deserialize<UserSession>(json);
     }
 
-    public static void Login(ISession session, UserSession user)
+    public void Login(ISession session, UserSession user)
     {
         session.SetString(SessionKey, JsonSerializer.Serialize(user));
     }
 
-    public static void Logout(ISession session)
+    public void Logout(ISession session)
     {
         session.Remove(SessionKey);
         session.Remove("cart");

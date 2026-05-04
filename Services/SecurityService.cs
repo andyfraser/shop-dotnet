@@ -3,18 +3,18 @@ using Dapper;
 
 namespace ShopDotNet.Services;
 
-public class SecurityService
+public class SecurityService : ISecurityService
 {
-    private readonly DatabaseService _db;
-    private readonly SettingsService _settings;
+    private readonly IDatabaseService _db;
+    private readonly ISettingsService _settings;
 
-    public SecurityService(DatabaseService db, SettingsService settings)
+    public SecurityService(IDatabaseService db, ISettingsService settings)
     {
         _db = db;
         _settings = settings;
     }
 
-    public static string GetOrCreateCsrfToken(ISession session)
+    public string GetOrCreateCsrfToken(ISession session)
     {
         var token = session.GetString("csrf_token");
         if (token == null)
@@ -25,7 +25,7 @@ public class SecurityService
         return token;
     }
 
-    public static bool ValidateCsrf(ISession session, string? token)
+    public bool ValidateCsrf(ISession session, string? token)
     {
         if (string.IsNullOrEmpty(token)) return false;
         var stored = session.GetString("csrf_token");

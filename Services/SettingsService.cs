@@ -2,9 +2,9 @@ using Dapper;
 
 namespace ShopDotNet.Services;
 
-public class SettingsService
+public class SettingsService : ISettingsService
 {
-    private readonly DatabaseService _db;
+    private readonly IDatabaseService _db;
     private Dictionary<string, string>? _cache;
 
     private static readonly Dictionary<string, string> Defaults = new()
@@ -19,7 +19,7 @@ public class SettingsService
         ["low_stock_threshold"] = "10",
     };
 
-    public SettingsService(DatabaseService db) => _db = db;
+    public SettingsService(IDatabaseService db) => _db = db;
 
     public string Get(string key)
     {

@@ -11,6 +11,12 @@ namespace ShopDotNet.Tests;
 public class AuthServiceTests
 {
     private const string SessionKey = "user_session";
+    private readonly AuthService _authService;
+
+    public AuthServiceTests()
+    {
+        _authService = new AuthService();
+    }
 
     [Fact]
     public void GetCurrentUser_ReturnsNull_WhenNoSession()
@@ -19,7 +25,7 @@ public class AuthServiceTests
         byte[] value = null;
         mockSession.Setup(s => s.TryGetValue(SessionKey, out value)).Returns(false);
 
-        var user = AuthService.GetCurrentUser(mockSession.Object);
+        var user = _authService.GetCurrentUser(mockSession.Object);
 
         Assert.Null(user);
     }
@@ -33,7 +39,7 @@ public class AuthServiceTests
         byte[] bytes = Encoding.UTF8.GetBytes(json);
         mockSession.Setup(s => s.TryGetValue(SessionKey, out bytes)).Returns(true);
 
-        var result = AuthService.GetCurrentUser(mockSession.Object);
+        var result = _authService.GetCurrentUser(mockSession.Object);
 
         Assert.NotNull(result);
         Assert.Equal(user.Id, result.Id);
@@ -49,7 +55,7 @@ public class AuthServiceTests
         mockSession.Setup(s => s.Set(SessionKey, It.IsAny<byte[]>()))
             .Callback<string, byte[]>((k, v) => capturedValue = v);
 
-        AuthService.Login(mockSession.Object, user);
+        _authService.Login(mockSession.Object, user);
 
         Assert.NotNull(capturedValue);
         var json = Encoding.UTF8.GetString(capturedValue);
@@ -62,7 +68,7 @@ public class AuthServiceTests
     {
         var mockSession = new Mock<ISession>();
         
-        AuthService.Logout(mockSession.Object);
+        _authService.Logout(mockSession.Object);
 
         mockSession.Verify(s => s.Remove(SessionKey), Times.Once);
         mockSession.Verify(s => s.Remove("cart"), Times.Once);

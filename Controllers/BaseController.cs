@@ -8,11 +8,27 @@ namespace ShopDotNet.Controllers;
 
 public abstract class BaseController : Controller
 {
-    protected DatabaseService Db => HttpContext.RequestServices.GetRequiredService<DatabaseService>();
-    protected SettingsService Settings => HttpContext.RequestServices.GetRequiredService<SettingsService>();
-    protected CartService Cart => HttpContext.RequestServices.GetRequiredService<CartService>();
+    protected readonly IDatabaseService Db;
+    protected readonly ISettingsService Settings;
+    protected readonly ICartService Cart;
+    protected readonly IAuthService Auth;
+    protected readonly ISecurityService Security;
 
-    protected UserSession? CurrentUser => AuthService.GetCurrentUser(HttpContext.Session);
+    protected BaseController(
+        IDatabaseService db,
+        ISettingsService settings,
+        ICartService cart,
+        IAuthService auth,
+        ISecurityService security)
+    {
+        Db = db;
+        Settings = settings;
+        Cart = cart;
+        Auth = auth;
+        Security = security;
+    }
+
+    protected UserSession? CurrentUser => Auth.GetCurrentUser(HttpContext.Session);
 
     public override void OnActionExecuting(ActionExecutingContext context)
     {
@@ -29,7 +45,7 @@ public abstract class BaseController : Controller
         ViewData["NavTree"] = navTree;
         ViewData["SiteName"] = siteName;
         ViewData["CurrencySymbol"] = currency;
-        ViewData["CsrfToken"] = SecurityService.GetOrCreateCsrfToken(HttpContext.Session);
+        ViewData["CsrfToken"] = Security.GetOrCreateCsrfToken(HttpContext.Session);
     }
 
     protected List<Category> GetNavTree()
@@ -66,7 +82,7 @@ public abstract class BaseController : Controller
 
     protected bool ValidateCsrf(string? token)
     {
-        return SecurityService.ValidateCsrf(HttpContext.Session, token);
+        return Security.ValidateCsrf(HttpContext.Session, token);
     }
 
     protected bool IsNewProduct(string createdAt)

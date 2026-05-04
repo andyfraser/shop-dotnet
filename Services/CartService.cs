@@ -4,11 +4,11 @@ using ShopDotNet.Models;
 
 namespace ShopDotNet.Services;
 
-public class CartService
+public class CartService : ICartService
 {
-    private readonly DatabaseService _db;
+    private readonly IDatabaseService _db;
 
-    public CartService(DatabaseService db) => _db = db;
+    public CartService(IDatabaseService db) => _db = db;
 
     private static Dictionary<int, int> GetCart(ISession session)
     {
